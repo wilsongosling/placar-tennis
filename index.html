@@ -3,7 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Placar de Tênis Pro</title>
+    <title>Placar de Tênis Pro Sync</title>
+    
+    <!-- Scripts do Firebase (Via CDN para funcionar direto no navegador/watch) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
         body { background-color: #000; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; overflow: hidden; }
@@ -18,9 +23,13 @@
         select, input { background: #222; color: #fff; border: 1px solid #444; padding: 10px; border-radius: 8px; font-size: 15px; width: 100%; }
         input::placeholder { color: #555; }
         .btn-iniciar { background: #00FF66; color: #000; font-weight: bold; border: none; padding: 14px; border-radius: 8px; font-size: 16px; cursor: pointer; margin-top: 5px; }
+        
+        .divisor { text-align: center; color: #555; margin: 10px 0; font-size: 12px; font-weight: bold; text-transform: uppercase; }
+        .btn-conectar { background: #00E0FF; color: #000; font-weight: bold; border: none; padding: 14px; border-radius: 8px; font-size: 16px; cursor: pointer; }
 
-        /* TELA DO PLACAR RESTRUTURADA (RESPONSIVA) */
+        /* TELA DO PLACAR RESTRUTURADA */
         #tela-placar { display: none; height: 100vh; width: 100vw; flex-direction: column; position: relative; }
+        #info-sala { position: absolute; top: 2px; left: 50%; transform: translateX(-50%); font-size: 10px; color: #00E0FF; font-weight: bold; z-index: 100; background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 4px; }
         
         .btn-jogador { border: none; background: transparent; color: #fff; font-size: 44px; font-weight: bold; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; flex: 1; }
         .nome-jogador { font-size: 13px; color: #00FF66; position: absolute; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; max-width: 90%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -41,19 +50,19 @@
         .btn-desfazer { color: #ff4444; font-size: 11px; }
         .btn-menu { color: #aaa; font-size: 11px; display: none; }
 
-        /* LAYOUT 1: PORTRAIT (Watch) */
+        /* LAYOUT 1: PORTRAIT (Watch e Celular em pé) */
         @media (orientation: portrait) {
             #tela-placar { flex-direction: column; }
             #btn-jogA { align-items: flex-start; padding-top: 25px; border-bottom: 1px dashed #333; }
             #btn-jogB { align-items: flex-end; padding-bottom: 25px; border-top: 1px dashed #333; }
-            #btn-jogA .nome-jogador { top: 6px; }
-            #btn-jogB .nome-jogador { bottom: 6px; }
+            #btn-jogA .nome-jogador { top: 8px; }
+            #btn-jogB .nome-jogador { bottom: 8px; }
             .painel-central { height: 16vh; width: 100vw; flex-direction: row; }
             .display-pontos { width: 30%; }
             .btn-acao-painel { width: 22%; height: 80%; }
         }
 
-        /* LAYOUT 2: LANDSCAPE (Celular) */
+        /* LAYOUT 2: LANDSCAPE (Celular deitado) */
         @media (orientation: landscape) {
             #tela-placar { flex-direction: row; }
             #btn-jogA { border-right: 1px dashed #333; order: 1; }
@@ -127,10 +136,19 @@
             </div>
         </div>
         <button class="btn-iniciar" onclick="iniciarJogo()">COMEÇAR JOGO</button>
+
+        <div class="divisor">Ou controle pelo Watch</div>
+
+        <div class="campo">
+            <label>Código da Sala (Gerado no Celular):</label>
+            <input type="number" id="cfg-codigo-sala" placeholder="Ex: 4829">
+        </div>
+        <button class="btn-conectar" onclick="conectarComoRelogio()">CONECTAR VIA RELÓGIO</button>
     </div>
 
     <!-- TELA DO PLACAR -->
     <div id="tela-placar">
+        <div id="info-sala">SALA: ----</div>
         <button id="btn-jogA" class="btn-jogador" onclick="pontuar('A')">
             <span class="nome-jogador" id="label-nomeA">JOGADOR A</span>
             <span id="pontosA">0</span>
@@ -166,16 +184,36 @@
     </div>
 
     <script>
+        // Configurações do Firebase injetadas do seu console
+        const firebaseConfig = {
+            apiKey: "AIzaSyCrXBORBx_2Y-ifCPsJGENFSB7MDuDCxDQ",
+            authDomain: "placar-tennis.firebaseapp.com",
+            databaseURL: "https://placar-tennis-default-rtdb.firebaseio.com",
+            projectId: "placar-tennis",
+            storageBucket: "placar-tennis.firebasestorage.app",
+            messagingSenderId: "332190545970",
+            appId: "1:332190545970:web:4c9744882aa538a3b3a42b"
+        };
+
+        // Inicializa o Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        let salaId = null;
+        let ehRelogio = false;
+        let ultimoPlacarFalado = "";
+
         let configs = { nomeA: "Jogador A", nomeB: "Jogador B", limiteVantagens: "sem_limites", usarTieBreak: true, tipoTb: "infinito", limitePontosTb: 10, setsParaVencer: 2, gamesParaVencerSet: 6 };
-        let jogo = { pontosA: 0, pontosB: 0, gamesA: 0, gamesB: 0, setsA: 0, setsB: 0, contadorDeuces: 0, emTieBreak: false, pontosTbA: 0, pontosTbB: 0, historicoSets: [], partidaEncerrada: false, historico: [] };
+        let jogo = { pontosA: 0, pontosB: 0, gamesA: 0, gamesB: 0, setsA: 0, setsB: 0, contadorDeuces: 0, emTieBreak: false, pontosTbA: 0, pontosTbB: 0, historicoSets: [], partidaEncerrada: false, historico: [], ultimaAcaoId: 0 };
         const nomesPontos = { 0: "0", 1: "15", 2: "30", 3: "40" };
 
         function falarPlacar(texto) {
-            if ('speechSynthesis' in window) {
+            // Apenas o celular (ou dispositivo que não seja o modo controle puro) narra para evitar duplicidade ou bloqueios no watch
+            if ('speechSynthesis' in window && !ehRelogio) {
                 window.speechSynthesis.cancel();
                 let fala = new SpeechSynthesisUtterance(texto);
                 fala.lang = 'pt-BR';
-                fala.rate = 1.1; 
+                fala.rate = 1.15; 
                 window.speechSynthesis.speak(fala);
             }
         }
@@ -186,54 +224,63 @@
                 return `Vitória de ${nomeVencedor}! Fim de jogo.`;
             }
 
-            // Mudança de Set (Ajustado sem o "a")
             if (jogo.pontosA === 0 && jogo.pontosB === 0 && jogo.gamesA === 0 && jogo.gamesB === 0 && jogo.historicoSets.length > 0) {
                 let ultimoSet = jogo.historicoSets[jogo.historicoSets.length - 1];
                 let nomeSetVencedor = ultimoSet.vencedor === 'A' ? configs.nomeA : configs.nomeB;
-                if (ultimoSet.a > ultimoSet.b) {
-                    return `Set para ${nomeSetVencedor}. ${ultimoSet.a} ${ultimoSet.b}.`;
-                } else {
-                    return `Set para ${nomeSetVencedor}. ${ultimoSet.b} ${ultimoSet.a}.`;
-                }
+                return `Set para ${nomeSetVencedor}. ${Math.max(ultimoSet.a, ultimoSet.b)} ${Math.min(ultimoSet.a, ultimoSet.b)}.`;
             }
 
-            // Mudança de Game (Ajustado sem o "a")
             if (jogo.pontosA === 0 && jogo.pontosB === 0 && !jogo.emTieBreak) {
                 let nomeGameVencedor = jogadorPontuou === 'A' ? configs.nomeA : configs.nomeB;
-                if (jogo.gamesA > jogo.gamesB) {
-                    return `Game ${nomeGameVencedor}. Games ${jogo.gamesA} ${jogo.gamesB}.`;
-                } else {
-                    return `Game ${nomeGameVencedor}. Games ${jogo.gamesB} ${jogo.gamesA}.`;
-                }
+                return `Game ${nomeGameVencedor}. Games ${Math.max(jogo.gamesA, jogo.gamesB)} ${Math.min(jogo.gamesA, jogo.gamesB)}.`;
             }
 
-            // TIE-BREAK (Ajustado sem o "a")
             if (jogo.emTieBreak) {
-                let tA = jogo.pontosTbA;
-                let tB = jogo.pontosTbB;
-                if (tA === tB) {
-                    return `${tA} iguais.`;
-                } else if (tA > tB) {
-                    return `${tA} ${tB}, ${configs.nomeA}.`;
-                } else {
-                    return `${tB} ${tA}, ${configs.nomeB}.`;
-                }
+                let tA = jogo.pontosTbA; let tB = jogo.pontosTbB;
+                if (tA === tB) return `${tA} iguais.`;
+                return tA > tB ? `${tA} ${tB}, ${configs.nomeA}.` : `${tB} ${tA}, ${configs.nomeB}.`;
             }
 
-            // GAME NORMAL
             let p = obterPlacarTexto();
-            
             if (p.a === "Adv") return `Vantagem ${configs.nomeA}.`;
             if (p.b === "Adv") return `Vantagem ${configs.nomeB}.`;
             if (jogo.pontosA === 3 && jogo.pontosB === 3) return "Iguais.";
             if (jogo.pontosA === jogo.pontosB && jogo.pontosA > 0) return `${nomesPontos[jogo.pontosA]} iguais.`;
 
-            // LÓGICA ATUALIZADA SECA: Pontos do maior primeiro + espaço + pontos do menor + Nome
             if (jogo.pontosA > jogo.pontosB) {
                 return `${nomesPontos[jogo.pontosA]} ${nomesPontos[jogo.pontosB]}, ${configs.nomeA}.`;
             } else {
                 return `${nomesPontos[jogo.pontosB]} ${nomesPontos[jogo.pontosA]}, ${configs.nomeB}.`;
             }
+        }
+
+        // Sincronização: Envia o estado atual do jogo para a nuvem
+        function enviarDadosFirebase(textoLocucao = "") {
+            if (!salaId) return;
+            database.ref('salas/' + salaId).set({
+                configs: configs,
+                jogo: jogo,
+                textoLocucao: textoLocucao,
+                timestamp: Date.now()
+            });
+        }
+
+        // Sincronização: Ouve mudanças ocorridas na nuvem
+        function escutarFirebase() {
+            database.ref('salas/' + salaId).on('value', (snapshot) => {
+                const dados = snapshot.val();
+                if (dados) {
+                    configs = dados.configs;
+                    jogo = dados.jogo;
+                    atualizarTelaVisual();
+                    
+                    // Dispara a locução de áudio no celular se houver um texto novo
+                    if (dados.textoLocucao && dados.textoLocucao !== ultimoPlacarFalado) {
+                        ultimoPlacarFalado = dados.textoLocucao;
+                        falarPlacar(ultimoPlacarFalado);
+                    }
+                }
+            });
         }
 
         function alternarVisibilidadeLimiteTb() {
@@ -242,6 +289,10 @@
         }
 
         function iniciarJogo() {
+            // Cria ID de sala aleatório de 4 dígitos
+            salaId = Math.floor(1000 + Math.random() * 9000).toString();
+            ehRelogio = false;
+
             configs.nomeA = document.getElementById("cfg-nomeA").value.trim() || "Jogador A";
             configs.nomeB = document.getElementById("cfg-nomeB").value.trim() || "Jogador B";
             configs.limiteVantagens = document.getElementById("cfg-vantagens").value;
@@ -251,21 +302,37 @@
             configs.setsParaVencer = parseInt(document.getElementById("cfg-sets").value);
             configs.gamesParaVencerSet = parseInt(document.getElementById("cfg-games").value);
             
-            document.getElementById("label-nomeA").innerText = configs.nomeA;
-            document.getElementById("label-nomeB").innerText = configs.nomeB;
-            
             document.getElementById("tela-config").style.display = "none";
             document.getElementById("tela-placar").style.display = "flex";
-            atualizarTela();
-            falarPlacar("Jogo iniciado. Boa partida!");
+            
+            escutarFirebase();
+            let msgInicial = "Jogo iniciado. Boa partida!";
+            enviarDadosFirebase(msgInicial);
+        }
+
+        function conectarComoRelogio() {
+            let codigoDigitado = document.getElementById("cfg-codigo-sala").value.trim();
+            if (!codigoDigitado) { alert("Digite o código gerado no celular!"); return; }
+            
+            salaId = codigoDigitado;
+            ehRelogio = true;
+
+            database.ref('salas/' + salaId).once('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    document.getElementById("tela-config").style.display = "none";
+                    document.getElementById("tela-placar").style.display = "flex";
+                    escutarFirebase();
+                } else {
+                    alert("Sala não encontrada! Inicie o jogo no celular primeiro.");
+                }
+            });
         }
 
         function voltarAoMenu() {
-            if (confirm("Deseja realmente voltar ao menu? Isso apagará todas as informações do jogo atual.")) {
+            if (confirm("Deseja voltar ao menu? Isso limpará a sala atual.")) {
                 window.speechSynthesis.cancel();
-                jogo = { pontosA: 0, pontosB: 0, gamesA: 0, gamesB: 0, setsA: 0, setsB: 0, contadorDeuces: 0, emTieBreak: false, pontosTbA: 0, pontosTbB: 0, historicoSets: [], partidaEncerrada: false, historico: [] };
-                document.getElementById("tela-placar").style.display = "none";
-                document.getElementById("tela-config").style.display = "flex";
+                if (salaId && !ehRelogio) { database.ref('salas/' + salaId).remove(); }
+                location.reload();
             }
         }
 
@@ -276,6 +343,7 @@
                 emTieBreak: jogo.emTieBreak, pontosTbA: jogo.pontosTbA, pontosTbB: jogo.pontosTbB,
                 historicoSets: [...jogo.historicoSets], partidaEncerrada: jogo.partidaEncerrada
             }));
+            jogo.ultimaAcaoId = Date.now();
         }
 
         function pontuar(jogador) {
@@ -286,21 +354,20 @@
                 jogo[`pontosTb${jogador}`]++;
                 let tA = jogo.pontosTbA; let tB = jogo.pontosTbB;
                 if (configs.tipoTb === "com_limite") {
-                    if (tA === configs.limitePontosTb) { colocarSet('A'); anunciarFimDePonto('A'); return; }
-                    if (tB === configs.limitePontosTb) { colocarSet('B'); anunciarFimDePonto('B'); return; }
+                    if (tA === configs.limitePontosTb) { colocarSet('A'); finalizarPonto('A'); return; }
+                    if (tB === configs.limitePontosTb) { colocarSet('B'); finalizarPonto('B'); return; }
                 }
                 if (tA >= 7 && (tA - tB) >= 2) { colocarSet('A'); } 
                 else if (tB >= 7 && (tB - tA) >= 2) { colocarSet('B'); }
             } else {
                 processarPontuacaoNormal(jogador, jogador === 'A' ? 'B' : 'A');
             }
-            anunciarFimDePonto(jogador);
+            finalizarPonto(jogador);
         }
 
-        function anunciarFimDePonto(jogador) {
-            atualizarTela();
-            let textoParaFalar = gerarTextoLocucao(jogador);
-            falarPlacar(textoParaFalar);
+        function finalizarPonto(jogador) {
+            let textoFalar = gerarTextoLocucao(jogador);
+            enviarDadosFirebase(textoFalar);
         }
 
         function processarPontuacaoNormal(ganhador, perdedor) {
@@ -333,7 +400,7 @@
             jogo.historicoSets.push({ a: jogo.gamesA, b: jogo.gamesB, vencedor: jogador });
             jogo[`sets${jogador}`]++;
             jogo.gamesA = 0; jogo.gamesB = 0; jogo.emTieBreak = false;
-            jogo.pontosTbA = 0; joke.pontosTbB = 0;
+            jogo.pontosTbA = 0; jogo.pontosTbB = 0;
             if (jogo.setsA === configs.setsParaVencer || jogo.setsB === configs.setsParaVencer) { jogo.partidaEncerrada = true; }
         }
 
@@ -341,8 +408,8 @@
             if (jogo.historico.length > 0) {
                 let e = JSON.parse(jogo.historico.pop());
                 Object.assign(jogo, e);
-                atualizarTela();
-                falarPlacar("Ponto desfeito.");
+                jogo.ultimaAcaoId = Date.now();
+                enviarDadosFirebase("Ponto desfeito.");
             }
         }
 
@@ -354,8 +421,12 @@
             return { a: nomesPontos[jogo.pontosA], b: nomesPontos[jogo.pontosB] };
         }
 
-        function atualizarTela() {
+        function atualizarTelaVisual() {
             let p = obterPlacarTexto();
+            document.getElementById("info-sala").innerText = `SALA: ${salaId}`;
+            document.getElementById("label-nomeA").innerText = configs.nomeA;
+            document.getElementById("label-nomeB").innerText = configs.nomeB;
+            
             document.getElementById("pontosA").innerText = p.a;
             document.getElementById("pontosB").innerText = p.b;
             document.getElementById("ptA").innerText = p.a;
