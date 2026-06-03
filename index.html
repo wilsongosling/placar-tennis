@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Placar de Tênis Pro Sync</title>
     
-    <!-- Scripts do Firebase Estáveis -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
@@ -63,7 +62,7 @@
         @media (orientation: landscape) {
             #tela-placar { flex-direction: row; }
             #btn-jogA { border-right: 1px dashed #333; order: 1; }
-            .painel-central { width: 28vw; height: 100vh; flex-direction: column; justify-content: space-around; order: 2; border-top: none; border-bottom: none; border-left: 2px solid #222; border-right: 2px solid #222; padding: 20px 10px; }
+            .painel-central { width: 28vw; height: 100vh; flex-direction: column; justify-content: space-around; order: 2; border-top: none; border-bottom: none; border-left: 2px solid #222; border-right: 2px solid #222; padding: 20px 10px; order: 2; }
             #btn-jogB { border-left: 1px dashed #333; order: 3; }
             
             .nome-jogador { top: 15px !important; bottom: auto !important; font-size: 16px; }
@@ -81,7 +80,6 @@
 </head>
 <body>
 
-    <!-- TELA DE CONFIGURAÇÃO -->
     <div id="tela-config">
         <h2>Configurar Jogo</h2>
         
@@ -143,7 +141,6 @@
         <button class="btn-conectar" onclick="conectarComoRelogio()">CONECTAR VIA RELÓGIO</button>
     </div>
 
-    <!-- TELA DO PLACAR -->
     <div id="tela-placar">
         <div id="info-sala">SALA: ----</div>
         <button id="btn-jogA" class="btn-jogador" onclick="pontuar('A')">
@@ -257,8 +254,8 @@
         function escutarFirebase() {
             database.ref('salas/' + salaId).on('value', (snapshot) => {
                 const dados = snapshot.val();
-                if (dados) {
-                    configs = dados.configs;
+                if (dados && dados.jogo) {
+                    configs = dados.configs || configs;
                     jogo = dados.jogo;
                     atualizarTelaVisual();
                     
@@ -288,11 +285,14 @@
             configs.setsParaVencer = parseInt(document.getElementById("cfg-sets").value) || 2;
             configs.gamesParaVencerSet = parseInt(document.getElementById("cfg-games").value) || 6;
             
+            // 1. Muda a interface local primeiro para resposta instantânea
             document.getElementById("tela-config").style.display = "none";
             document.getElementById("tela-placar").style.display = "flex";
+            atualizarTelaVisual();
             
-            escutarFirebase();
+            // 2. Registra e ativa o Firebase depois da interface pronta
             enviarDadosFirebase("Jogo iniciado. Boa partida!");
+            setTimeout(escutarFirebase, 400);
         }
 
         function conectarComoRelogio() {
@@ -326,7 +326,7 @@
                 pontosA: jogo.pontosA, pontosB: jogo.pontosB, gamesA: jogo.gamesA, gamesB: jogo.gamesB,
                 setsA: jogo.setsA, setsB: jogo.setsB, contadorDeuces: jogo.contadorDeuces,
                 emTieBreak: jogo.emTieBreak, pontosTbA: jogo.pontosTbA, pontosTbB: jogo.pontosTbB,
-                historicoSets: JSON.parse(JSON.stringify(jogo.historicoSets)), partidaEncerrada: jogo.partidaEncerrada
+                historicoSets: JSON.parse(JSON.stringify(jogo.historicoSets || [])), partidaEncerrada: jogo.partidaEncerrada
             };
             if (!jogo.historico) jogo.historico = [];
             jogo.historico.push(JSON.stringify(estado));
@@ -352,6 +352,7 @@
         }
 
         function finalizarPonto(jogador) {
+            atualizarTelaVisual();
             let textoFalar = gerarTextoLocucao(jogador);
             enviarDadosFirebase(textoFalar);
         }
@@ -395,6 +396,7 @@
             if (jogo.historico && jogo.historico.length > 0) {
                 let e = JSON.parse(jogo.historico.pop());
                 Object.assign(jogo, e);
+                atualizarTelaVisual();
                 enviarDadosFirebase("Ponto desfeito.");
             }
         }
