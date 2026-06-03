@@ -186,48 +186,53 @@
                 return `Vitória de ${nomeVencedor}! Fim de jogo.`;
             }
 
-            // Se acabou de mudar o Set
+            // Mudança de Set (Ajustado sem o "a")
             if (jogo.pontosA === 0 && jogo.pontosB === 0 && jogo.gamesA === 0 && jogo.gamesB === 0 && jogo.historicoSets.length > 0) {
                 let ultimoSet = jogo.historicoSets[jogo.historicoSets.length - 1];
                 let nomeSetVencedor = ultimoSet.vencedor === 'A' ? configs.nomeA : configs.nomeB;
-                return `Set para ${nomeSetVencedor}. Placar do set: ${ultimoSet.a} a ${ultimoSet.b}.`;
+                if (ultimoSet.a > ultimoSet.b) {
+                    return `Set para ${nomeSetVencedor}. ${ultimoSet.a} ${ultimoSet.b}.`;
+                } else {
+                    return `Set para ${nomeSetVencedor}. ${ultimoSet.b} ${ultimoSet.a}.`;
+                }
             }
 
-            // Se acabou de mudar o Game
+            // Mudança de Game (Ajustado sem o "a")
             if (jogo.pontosA === 0 && jogo.pontosB === 0 && !jogo.emTieBreak) {
                 let nomeGameVencedor = jogadorPontuou === 'A' ? configs.nomeA : configs.nomeB;
-                return `Game ${nomeGameVencedor}. Games: ${jogo.gamesA} a ${jogo.gamesB}.`;
+                if (jogo.gamesA > jogo.gamesB) {
+                    return `Game ${nomeGameVencedor}. Games ${jogo.gamesA} ${jogo.gamesB}.`;
+                } else {
+                    return `Game ${nomeGameVencedor}. Games ${jogo.gamesB} ${jogo.gamesA}.`;
+                }
             }
 
-            // TIE-BREAK (Sempre quem está ganhando primeiro + nome)
+            // TIE-BREAK (Ajustado sem o "a")
             if (jogo.emTieBreak) {
                 let tA = jogo.pontosTbA;
                 let tB = jogo.pontosTbB;
                 if (tA === tB) {
                     return `${tA} iguais.`;
                 } else if (tA > tB) {
-                    return `${tA} a ${tB}, ${configs.nomeA}.`;
+                    return `${tA} ${tB}, ${configs.nomeA}.`;
                 } else {
-                    return `${tB} a ${tA}, ${configs.nomeB}.`;
+                    return `${tB} ${tA}, ${configs.nomeB}.`;
                 }
             }
 
             // GAME NORMAL
             let p = obterPlacarTexto();
             
-            // Tratamento de Vantagens
             if (p.a === "Adv") return `Vantagem ${configs.nomeA}.`;
             if (p.b === "Adv") return `Vantagem ${configs.nomeB}.`;
-            
-            // Tratamento de Iguais
             if (jogo.pontosA === 3 && jogo.pontosB === 3) return "Iguais.";
             if (jogo.pontosA === jogo.pontosB && jogo.pontosA > 0) return `${nomesPontos[jogo.pontosA]} iguais.`;
 
-            // LÓGICA PEDIDA: Maior pontuação primeiro + nome de quem está ganhando
+            // LÓGICA ATUALIZADA SECA: Pontos do maior primeiro + espaço + pontos do menor + Nome
             if (jogo.pontosA > jogo.pontosB) {
-                return `${nomesPontos[jogo.pontosA]} a ${nomesPontos[jogo.pontosB]}, ${configs.nomeA}.`;
+                return `${nomesPontos[jogo.pontosA]} ${nomesPontos[jogo.pontosB]}, ${configs.nomeA}.`;
             } else {
-                return `${nomesPontos[jogo.pontosB]} a ${nomesPontos[jogo.pontosA]}, ${configs.nomeB}.`;
+                return `${nomesPontos[jogo.pontosB]} ${nomesPontos[jogo.pontosA]}, ${configs.nomeB}.`;
             }
         }
 
@@ -328,7 +333,7 @@
             jogo.historicoSets.push({ a: jogo.gamesA, b: jogo.gamesB, vencedor: jogador });
             jogo[`sets${jogador}`]++;
             jogo.gamesA = 0; jogo.gamesB = 0; jogo.emTieBreak = false;
-            jogo.pontosTbA = 0; jogo.pontosTbB = 0;
+            jogo.pontosTbA = 0; joke.pontosTbB = 0;
             if (jogo.setsA === configs.setsParaVencer || jogo.setsB === configs.setsParaVencer) { jogo.partidaEncerrada = true; }
         }
 
