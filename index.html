@@ -177,24 +177,18 @@
     </div>
 
     <script>
-        // ATENÇÃO: Insira suas chaves reais do Firebase aqui para o Sync funcionar
         const firebaseConfig = {
-            apiKey: "SUA_API_KEY_AQUI",
-            authDomain: "SEU_AUTH_DOMAIN_AQUI",
-            databaseURL: "SUA_DATABASE_URL_AQUI",
-            projectId: "SEU_PROJECT_ID_AQUI",
-            storageBucket: "SEU_STORAGE_BUCKET_AQUI",
-            messagingSenderId: "SEU_SENDER_ID_AQUI",
-            appId: "SEU_APP_ID_AQUI"
+            apiKey: "AIzaSyCrXBORBx_2Y-ifCPsJGENFSB7MDuDCxDQ",
+            authDomain: "placar-tennis.firebaseapp.com",
+            databaseURL: "https://placar-tennis-default-rtdb.firebaseio.com",
+            projectId: "placar-tennis",
+            storageBucket: "placar-tennis.firebasestorage.app",
+            messagingSenderId: "332190545970",
+            appId: "1:332190545970:web:4c9744882aa538a3b3a42b"
         };
 
-        let database = null;
-        try {
-            firebase.initializeApp(firebaseConfig);
-            database = firebase.database();
-        } catch (e) {
-            console.error("Erro ao conectar com Firebase. Verifique suas credenciais.", e);
-        }
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
 
         let salaId = null;
         let ehRelogio = false;
@@ -248,22 +242,22 @@
         }
 
         function enviarDadosFirebase(textoLocucao = "") {
-            if (!database || !salaId) return;
+            if (!salaId) return;
             database.ref('salas/' + salaId).set({
                 configs: configs,
                 jogo: jogo,
                 textoLocucao: textoLocucao
-            }).catch(e => console.log("Firebase Offline/Ignorado"));
+            });
         }
 
         function desligarEscutador() {
-            if (database && salaId) {
+            if (salaId) {
                 database.ref('salas/' + salaId).off();
             }
         }
 
         function escutarFirebase() {
-            if (!database || !salaId) return;
+            if (!salaId) return;
             database.ref('salas/' + salaId).on('value', (snapshot) => {
                 const dados = snapshot.val();
                 if (dados && dados.jogo) {
@@ -308,7 +302,6 @@
         }
 
         function conectarComoRelogio() {
-            if (!database) { alert("Firebase não configurado!"); return; }
             let codigoDigitado = document.getElementById("cfg-codigo-sala").value.trim();
             if (!codigoDigitado) { alert("Digite o código gerado no celular!"); return; }
             
@@ -330,8 +323,8 @@
             if (confirm("Deseja voltar ao menu? Isso limpará a sala atual.")) {
                 window.speechSynthesis.cancel();
                 desligarEscutador();
-                if (database && salaId && !ehRelogio) { 
-                    database.ref('salas/' + salaId).remove().catch(e => {}); 
+                if (salaId && !ehRelogio) { 
+                    database.ref('salas/' + salaId).remove(); 
                 }
                 location.href = location.pathname; 
             }
@@ -340,15 +333,13 @@
         function salvarHistorico() {
             let estado = {
                 pontosA: jogo.pontosA, pontosB: jogo.pontosB, gamesA: jogo.gamesA, gamesB: jogo.gamesB,
-                setsA: jogo.setsA, setsB: fontEndFix(jogo.setsB), contadorDeuces: jogo.contadorDeuces,
+                setsA: jogo.setsA, setsB: jogo.setsB, contadorDeuces: jogo.contadorDeuces,
                 emTieBreak: jogo.emTieBreak, pontosTbA: jogo.pontosTbA, pontosTbB: jogo.pontosTbB,
                 historicoSets: JSON.parse(JSON.stringify(jogo.historicoSets || [])), partidaEncerrada: jogo.partidaEncerrada
             };
             if (!jogo.historico) jogo.historico = [];
             jogo.historico.push(JSON.stringify(estado));
         }
-
-        function fontEndFix(val) { return val; }
 
         function pontuar(jogador) {
             if (jogo.partidaEncerrada) return;
@@ -383,4 +374,79 @@
             if (configs.limiteVantagens === "0" && jogo[pGanhador] === 3 && jogo[pPerdedor] === 3) { colocarGame(ganhador); return; }
             if (jogo[pGanhador] === 4) { colocarGame(ganhador); return; }
             if (jogo[pPerdedor] === 4) { jogo[pPerdedor] = 3; return; }
-            if (jogo[pGanhador] === 3 && jogo[pPerdedor] ===
+            if (jogo[pGanhador] === 3 && jogo[pPerdedor] === 3) {
+                jogo.contadorDeuces++;
+                if (configs.limiteVantagens === "1" && jogo.contadorDeuces > 1) { colocarGame(ganhador); } else { jogo[pGanhador] = 4; }
+                return;
+            }
+            if (jogo[pGanhador] === 3 && jogo[pPerdedor] < 3) { colocarGame(ganhador); return; }
+            jogo[pGanhador]++;
+        }
+
+        function colocarGame(jogador) {
+            let gMax = configs.gamesParaVencerSet;
+            if (jogador === 'A') jogo.gamesA++; else jogo.gamesB++;
+            jogo.pontosA = 0; jogo.pontosB = 0; jogo.contadorDeuces = 0;
+            let gA = jogo.gamesA; let gB = jogo.gamesB;
+
+            if (configs.usarTieBreak && gA === gMax && gB === gMax) { fontEndFix = true; jogo.emTieBreak = true; jogo.pontosTbA = 0; jogo.pontosTbB = 0; return; }
+            if (gA >= gMax || gB >= gMax) {
+                if (gA >= gMax && (gA - gB) >= 2) { colocarSet('A'); } else if (gB >= gMax && (gB - gA) >= 2) { colocarSet('B'); }
+            }
+        }
+
+        function colocarSet(jogador) {
+            if (!jogo.historicoSets) jogo.historicoSets = [];
+            jogo.historicoSets.push({ a: jogo.gamesA, b: jogo.gamesB, vencedor: jogador });
+            if (jogador === 'A') jogo.setsA++; else jogo.setsB++;
+            jogo.gamesA = 0; jogo.gamesB = 0; jogo.emTieBreak = false;
+            jogo.pontosTbA = 0; jogo.pontosTbB = 0;
+            if (jogo.setsA === configs.setsParaVencer || jogo.setsB === configs.setsParaVencer) { jogo.partidaEncerrada = true; }
+        }
+
+        function desfazer() {
+            if (jogo.historico && jogo.historico.length > 0) {
+                let e = JSON.parse(jogo.historico.pop());
+                Object.assign(jogo, e);
+                atualizarTelaVisual();
+                enviarDadosFirebase("Ponto desfeito.");
+            }
+        }
+
+        function obterPlacarTexto() {
+            if (jogo.emTieBreak) return { a: jogo.pontosTbA, b: jogo.pontosTbB };
+            if (jogo.pontosA === 4) return { a: "Adv", b: "40" };
+            if (jogo.pontosB === 4) return { a: "40", b: "Adv" };
+            if (jogo.pontosA === 3 && jogo.pontosB === 3) return { a: "40", b: "40" };
+            return { a: nomesPontos[jogo.pontosA] || "0", b: nomesPontos[jogo.pontosB] || "0" };
+        }
+
+        function atualizarTelaVisual() {
+            let p = obterPlacarTexto();
+            document.getElementById("info-sala").innerText = `SALA: ${salaId || '----'}`;
+            document.getElementById("label-nomeA").innerText = configs.nomeA;
+            document.getElementById("label-nomeB").innerText = configs.nomeB;
+            
+            document.getElementById("pontosA").innerText = p.a;
+            document.getElementById("pontosB").innerText = p.b;
+            document.getElementById("ptA").innerText = p.a;
+            document.getElementById("ptB").innerText = p.b;
+            document.getElementById("gamesA").innerText = jogo.gamesA;
+            document.getElementById("gamesB").innerText = jogo.gamesB;
+            document.getElementById("rotuloPontos").innerText = jogo.emTieBreak ? "TIE-BRK" : "PONTOS";
+
+            let htmlSetsA = ""; let htmlSetsB = "";
+            if (jogo.historicoSets) {
+                jogo.historicoSets.forEach(set => {
+                    let classeA = set.vencedor === 'A' ? 'class="set-ganho"' : '';
+                    let classeB = set.vencedor === 'B' ? 'class="set-ganho"' : '';
+                    htmlSetsA += `<span ${classeA}>&nbsp;${set.a}&nbsp;</span>`;
+                    htmlSetsB += `<span ${classeB}>&nbsp;${set.b}&nbsp;</span>`;
+                });
+            }
+            document.getElementById("setsPassadosA").innerHTML = htmlSetsA;
+            document.getElementById("setsPassadosB").innerHTML = htmlSetsB;
+        }
+    </script>
+</body>
+</html>
