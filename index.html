@@ -39,11 +39,9 @@
 
         .btn-acao-painel { background: #222; border: none; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 4px; padding: 8px; }
         .btn-desfazer { color: #ff4444; font-size: 11px; }
-        .btn-menu { color: #aaa; font-size: 11px; display: none; } /* Escondido por padrão no Watch (Retrato) */
+        .btn-menu { color: #aaa; font-size: 11px; display: none; }
 
-        /* ======================================================= */
-        /* LAYOUT 1: MODO EM PÉ (PORTRAIT) - Otimizado para Watch  */
-        /* ======================================================= */
+        /* LAYOUT 1: PORTRAIT (Watch) */
         @media (orientation: portrait) {
             #tela-placar { flex-direction: column; }
             #btn-jogA { align-items: flex-start; padding-top: 25px; border-bottom: 1px dashed #333; }
@@ -55,9 +53,7 @@
             .btn-acao-painel { width: 22%; height: 80%; }
         }
 
-        /* ======================================================= */
-        /* LAYOUT 2: MODO DEITADO (LANDSCAPE) - Otimizado para Celular */
-        /* ======================================================= */
+        /* LAYOUT 2: LANDSCAPE (Celular) */
         @media (orientation: landscape) {
             #tela-placar { flex-direction: row; }
             #btn-jogA { border-right: 1px dashed #333; order: 1; }
@@ -73,7 +69,7 @@
             .game-atual { font-size: 20px; }
             
             .btn-acao-painel { width: 90%; height: 40px; font-size: 13px; }
-            .btn-menu { display: flex; } /* Ativa e mostra o botão MENU apenas de lado (Celular) */
+            .btn-menu { display: flex; }
         }
     </style>
 </head>
@@ -141,7 +137,6 @@
         </button>
 
         <div class="painel-central">
-            <!-- Botão Voltar ao Menu (Exclusivo Celular de Lado) -->
             <button class="btn-acao-painel btn-menu" onclick="voltarAoMenu()">MENU</button>
 
             <div class="display-pontos">
@@ -161,7 +156,6 @@
                 </div>
             </div>
 
-            <!-- Botão Corrigir -->
             <button class="btn-acao-painel btn-desfazer" onclick="desfazer()">CORRIGIR</button>
         </div>
 
@@ -175,6 +169,67 @@
         let configs = { nomeA: "Jogador A", nomeB: "Jogador B", limiteVantagens: "sem_limites", usarTieBreak: true, tipoTb: "infinito", limitePontosTb: 10, setsParaVencer: 2, gamesParaVencerSet: 6 };
         let jogo = { pontosA: 0, pontosB: 0, gamesA: 0, gamesB: 0, setsA: 0, setsB: 0, contadorDeuces: 0, emTieBreak: false, pontosTbA: 0, pontosTbB: 0, historicoSets: [], partidaEncerrada: false, historico: [] };
         const nomesPontos = { 0: "0", 1: "15", 2: "30", 3: "40" };
+
+        function falarPlacar(texto) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                let fala = new SpeechSynthesisUtterance(texto);
+                fala.lang = 'pt-BR';
+                fala.rate = 1.1; 
+                window.speechSynthesis.speak(fala);
+            }
+        }
+
+        function gerarTextoLocucao(jogadorPontuou) {
+            if (jogo.partidaEncerrada) {
+                let nomeVencedor = jogo.setsA > jogo.setsB ? configs.nomeA : configs.nomeB;
+                return `Vitória de ${nomeVencedor}! Fim de jogo.`;
+            }
+
+            // Se acabou de mudar o Set
+            if (jogo.pontosA === 0 && jogo.pontosB === 0 && jogo.gamesA === 0 && jogo.gamesB === 0 && jogo.historicoSets.length > 0) {
+                let ultimoSet = jogo.historicoSets[jogo.historicoSets.length - 1];
+                let nomeSetVencedor = ultimoSet.vencedor === 'A' ? configs.nomeA : configs.nomeB;
+                return `Set para ${nomeSetVencedor}. Placar do set: ${ultimoSet.a} a ${ultimoSet.b}.`;
+            }
+
+            // Se acabou de mudar o Game
+            if (jogo.pontosA === 0 && jogo.pontosB === 0 && !jogo.emTieBreak) {
+                let nomeGameVencedor = jogadorPontuou === 'A' ? configs.nomeA : configs.nomeB;
+                return `Game ${nomeGameVencedor}. Games: ${jogo.gamesA} a ${jogo.gamesB}.`;
+            }
+
+            // TIE-BREAK (Sempre quem está ganhando primeiro + nome)
+            if (jogo.emTieBreak) {
+                let tA = jogo.pontosTbA;
+                let tB = jogo.pontosTbB;
+                if (tA === tB) {
+                    return `${tA} iguais.`;
+                } else if (tA > tB) {
+                    return `${tA} a ${tB}, ${configs.nomeA}.`;
+                } else {
+                    return `${tB} a ${tA}, ${configs.nomeB}.`;
+                }
+            }
+
+            // GAME NORMAL
+            let p = obterPlacarTexto();
+            
+            // Tratamento de Vantagens
+            if (p.a === "Adv") return `Vantagem ${configs.nomeA}.`;
+            if (p.b === "Adv") return `Vantagem ${configs.nomeB}.`;
+            
+            // Tratamento de Iguais
+            if (jogo.pontosA === 3 && jogo.pontosB === 3) return "Iguais.";
+            if (jogo.pontosA === jogo.pontosB && jogo.pontosA > 0) return `${nomesPontos[jogo.pontosA]} iguais.`;
+
+            // LÓGICA PEDIDA: Maior pontuação primeiro + nome de quem está ganhando
+            if (jogo.pontosA > jogo.pontosB) {
+                return `${nomesPontos[jogo.pontosA]} a ${nomesPontos[jogo.pontosB]}, ${configs.nomeA}.`;
+            } else {
+                return `${nomesPontos[jogo.pontosB]} a ${nomesPontos[jogo.pontosA]}, ${configs.nomeB}.`;
+            }
+        }
 
         function alternarVisibilidadeLimiteTb() {
             const tipo = document.getElementById("cfg-tipo-tb").value;
@@ -197,14 +252,13 @@
             document.getElementById("tela-config").style.display = "none";
             document.getElementById("tela-placar").style.display = "flex";
             atualizarTela();
+            falarPlacar("Jogo iniciado. Boa partida!");
         }
 
         function voltarAoMenu() {
             if (confirm("Deseja realmente voltar ao menu? Isso apagará todas as informações do jogo atual.")) {
-                // Zera completamente o estado dinâmico do jogo
+                window.speechSynthesis.cancel();
                 jogo = { pontosA: 0, pontosB: 0, gamesA: 0, gamesB: 0, setsA: 0, setsB: 0, contadorDeuces: 0, emTieBreak: false, pontosTbA: 0, pontosTbB: 0, historicoSets: [], partidaEncerrada: false, historico: [] };
-                
-                // Retorna para a tela de configurações
                 document.getElementById("tela-placar").style.display = "none";
                 document.getElementById("tela-config").style.display = "flex";
             }
@@ -227,15 +281,21 @@
                 jogo[`pontosTb${jogador}`]++;
                 let tA = jogo.pontosTbA; let tB = jogo.pontosTbB;
                 if (configs.tipoTb === "com_limite") {
-                    if (tA === configs.limitePontosTb) { colocarSet('A'); atualizarTela(); return; }
-                    if (tB === configs.limitePontosTb) { colocarSet('B'); atualizarTela(); return; }
+                    if (tA === configs.limitePontosTb) { colocarSet('A'); anunciarFimDePonto('A'); return; }
+                    if (tB === configs.limitePontosTb) { colocarSet('B'); anunciarFimDePonto('B'); return; }
                 }
                 if (tA >= 7 && (tA - tB) >= 2) { colocarSet('A'); } 
                 else if (tB >= 7 && (tB - tA) >= 2) { colocarSet('B'); }
             } else {
                 processarPontuacaoNormal(jogador, jogador === 'A' ? 'B' : 'A');
             }
+            anunciarFimDePonto(jogador);
+        }
+
+        function anunciarFimDePonto(jogador) {
             atualizarTela();
+            let textoParaFalar = gerarTextoLocucao(jogador);
+            falarPlacar(textoParaFalar);
         }
 
         function processarPontuacaoNormal(ganhador, perdedor) {
@@ -277,6 +337,7 @@
                 let e = JSON.parse(jogo.historico.pop());
                 Object.assign(jogo, e);
                 atualizarTela();
+                falarPlacar("Ponto desfeito.");
             }
         }
 
