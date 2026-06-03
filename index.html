@@ -9,43 +9,91 @@
         body { background-color: #000; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; overflow: hidden; }
         
         /* TELA DE CONFIGURAÇÃO */
-        #tela-config { padding: 20px; display: flex; flex-direction: column; gap: 12px; max-width: 400px; margin: 0 auto; height: 100vh; overflow-y: auto; }
+        #tela-config { padding: 20px; display: flex; flex-direction: column; gap: 10px; max-width: 400px; margin: 0 auto; height: 100vh; overflow-y: auto; }
         h2 { text-align: center; color: #00FF66; margin-bottom: 5px; font-size: 20px; }
         .campo { display: flex; flex-direction: column; gap: 4px; }
+        .campo-duplo { display: flex; gap: 10px; }
+        .campo-duplo .campo { flex: 1; }
         label { font-size: 13px; color: #aaa; }
-        select, input { background: #222; color: #fff; border: 1px solid #444; padding: 10px; border-radius: 8px; font-size: 15px; }
+        select, input { background: #222; color: #fff; border: 1px solid #444; padding: 10px; border-radius: 8px; font-size: 15px; width: 100%; }
+        input::placeholder { color: #555; }
         .btn-iniciar { background: #00FF66; color: #000; font-weight: bold; border: none; padding: 14px; border-radius: 8px; font-size: 16px; cursor: pointer; margin-top: 5px; }
 
-        /* TELA DO PLACAR (Otimizada para Apple Watch) */
-        #tela-placar { display: none; height: 100vh; flex-direction: column; position: relative; }
+        /* TELA DO PLACAR RESTRUTURADA (RESPONSIVA) */
+        #tela-placar { display: none; height: 100vh; width: 100vw; flex-direction: column; position: relative; }
         
-        .btn-jogador { width: 100%; height: 42vh; border: none; background: transparent; color: #fff; font-size: 44px; font-weight: bold; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; }
-        #btn-jogA { align-items: flex-start; padding-top: 20px; border-bottom: 1px dashed #333; }
-        #btn-jogB { align-items: flex-end; padding-bottom: 20px; border-top: 1px dashed #333; }
-        
-        .nome-jogador { font-size: 12px; color: #00FF66; position: absolute; font-weight: normal; letter-spacing: 1px; }
-        #btn-jogA .nome-jogador { top: 5px; }
-        #btn-jogB .nome-jogador { bottom: 5px; }
+        .btn-jogador { border: none; background: transparent; color: #fff; font-size: 44px; font-weight: bold; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; flex: 1; }
+        .nome-jogador { font-size: 13px; color: #00FF66; position: absolute; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; max-width: 90%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        /* PAINEL CENTRAL FIXED */
-        .painel-central { height: 16vh; background: #111; display: flex; align-items: center; justify-content: space-between; padding: 0 8px; border-top: 2px solid #222; border-bottom: 2px solid #222; }
+        /* PAINEL CENTRAL UNIVERSAL */
+        .painel-central { background: #111; display: flex; align-items: center; justify-content: space-between; padding: 10px; border: 2px solid #222; z-index: 10; }
         
-        .display-pontos { display: flex; flex-direction: column; justify-content: center; align-items: center; width: 33%; }
-        .label-pequena { font-size: 8px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; text-align: center; }
-        .num-pontos { font-size: 20px; font-weight: 800; color: #00FF66; margin-top: 2px; }
+        .display-pontos { display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .label-pequena { font-size: 9px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; text-align: center; }
+        .num-pontos { font-size: 22px; font-weight: 800; color: #00FF66; margin-top: 2px; }
         
-        .display-sets { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 47%; font-size: 12px; border-left: 1px solid #333; border-right: 1px solid #333; height: 100%; }
-        .linha-set { display: flex; gap: 5px; color: #888; align-items: center; width: 100%; justify-content: center; }
-        .game-atual { color: #FFA500; font-weight: bold; font-size: 15px; margin-right: 4px; }
+        .display-sets { display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 13px; border-left: 1px solid #333; border-right: 1px solid #333; height: 100%; flex: 1; margin: 0 10px; }
+        .linha-set { display: flex; gap: 6px; color: #888; align-items: center; width: 100%; justify-content: center; }
+        .game-atual { color: #FFA500; font-weight: bold; font-size: 16px; margin-right: 4px; min-width: 15px; text-align: center; }
         .set-ganho { font-weight: 900; color: #fff; text-decoration: underline; }
 
-        .btn-desfazer { width: 20%; height: 100%; background: #222; border: none; color: #ff4444; font-size: 10px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .btn-acao-painel { background: #222; border: none; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 4px; padding: 8px; }
+        .btn-desfazer { color: #ff4444; font-size: 11px; }
+        .btn-menu { color: #aaa; font-size: 11px; display: none; } /* Escondido por padrão no Watch (Retrato) */
+
+        /* ======================================================= */
+        /* LAYOUT 1: MODO EM PÉ (PORTRAIT) - Otimizado para Watch  */
+        /* ======================================================= */
+        @media (orientation: portrait) {
+            #tela-placar { flex-direction: column; }
+            #btn-jogA { align-items: flex-start; padding-top: 25px; border-bottom: 1px dashed #333; }
+            #btn-jogB { align-items: flex-end; padding-bottom: 25px; border-top: 1px dashed #333; }
+            #btn-jogA .nome-jogador { top: 6px; }
+            #btn-jogB .nome-jogador { bottom: 6px; }
+            .painel-central { height: 16vh; width: 100vw; flex-direction: row; }
+            .display-pontos { width: 30%; }
+            .btn-acao-painel { width: 22%; height: 80%; }
+        }
+
+        /* ======================================================= */
+        /* LAYOUT 2: MODO DEITADO (LANDSCAPE) - Otimizado para Celular */
+        /* ======================================================= */
+        @media (orientation: landscape) {
+            #tela-placar { flex-direction: row; }
+            #btn-jogA { border-right: 1px dashed #333; order: 1; }
+            .painel-central { width: 28vw; height: 100vh; flex-direction: column; justify-content: space-around; order: 2; border-top: none; border-bottom: none; border-left: 2px solid #222; border-right: 2px solid #222; padding: 20px 10px; }
+            #btn-jogB { border-left: 1px dashed #333; order: 3; }
+            
+            .nome-jogador { top: 15px !important; bottom: auto !important; font-size: 16px; }
+            .btn-jogador { font-size: 70px; }
+            
+            .display-pontos { width: 100%; }
+            .display-sets { border-left: none; border-right: none; border-top: 1px solid #333; border-bottom: 1px solid #333; width: 100%; padding: 15px 0; margin: 15px 0; }
+            .linha-set { font-size: 16px; }
+            .game-atual { font-size: 20px; }
+            
+            .btn-acao-painel { width: 90%; height: 40px; font-size: 13px; }
+            .btn-menu { display: flex; } /* Ativa e mostra o botão MENU apenas de lado (Celular) */
+        }
     </style>
 </head>
 <body>
 
+    <!-- TELA DE CONFIGURAÇÃO -->
     <div id="tela-config">
         <h2>Configurar Jogo</h2>
+        
+        <div class="campo-duplo">
+            <div class="campo">
+                <label>Jogador A (Top/Esq):</label>
+                <input type="text" id="cfg-nomeA" value="Jogador A" maxlength="12">
+            </div>
+            <div class="campo">
+                <label>Jogador B (Baixo/Dir):</label>
+                <input type="text" id="cfg-nomeB" value="Jogador B" maxlength="12">
+            </div>
+        </div>
+
         <div class="campo">
             <label>Vantagens no Game:</label>
             <select id="cfg-vantagens">
@@ -69,27 +117,33 @@
             </select>
         </div>
         <div class="campo" id="campo-limite-tb" style="display: none;">
-            <label>Pontuação máxima do Tie-break (ex: 10):</label>
+            <label>Pontuação máxima do Tie-break:</label>
             <input type="number" id="cfg-limite-pontos-tb" value="10" min="5" max="30">
         </div>
-        <div class="campo">
-            <label>Sets por partida (Para vencer):</label>
-            <input type="number" id="cfg-sets" value="2" min="1" max="10">
-        </div>
-        <div class="campo">
-            <label>Games por Set (Para vencer padrão):</label>
-            <input type="number" id="cfg-games" value="6" min="1" max="10">
+        <div class="campo-duplo">
+            <div class="campo">
+                <label>Sets p/ vencer:</label>
+                <input type="number" id="cfg-sets" value="2" min="1" max="10">
+            </div>
+            <div class="campo">
+                <label>Games por Set:</label>
+                <input type="number" id="cfg-games" value="6" min="1" max="10">
+            </div>
         </div>
         <button class="btn-iniciar" onclick="iniciarJogo()">COMEÇAR JOGO</button>
     </div>
 
+    <!-- TELA DO PLACAR -->
     <div id="tela-placar">
         <button id="btn-jogA" class="btn-jogador" onclick="pontuar('A')">
-            <span class="nome-jogador">JOGADOR A</span>
+            <span class="nome-jogador" id="label-nomeA">JOGADOR A</span>
             <span id="pontosA">0</span>
         </button>
 
         <div class="painel-central">
+            <!-- Botão Voltar ao Menu (Exclusivo Celular de Lado) -->
+            <button class="btn-acao-painel btn-menu" onclick="voltarAoMenu()">MENU</button>
+
             <div class="display-pontos">
                 <span id="rotuloPontos" class="label-pequena">PONTOS</span>
                 <span class="num-pontos"><span id="ptA">0</span>:<span id="ptB">0</span></span>
@@ -97,27 +151,28 @@
 
             <div class="display-sets">
                 <span class="label-pequena">GAMES (SETS)</span>
-                <div class="linha-set" id="historicoA">
+                <div class="linha-set">
                     <span class="game-atual" id="gamesA">0</span>
                     <span id="setsPassadosA"></span>
                 </div>
-                <div class="linha-set" id="historicoB">
+                <div class="linha-set">
                     <span class="game-atual" id="gamesB">0</span>
                     <span id="setsPassadosB"></span>
                 </div>
             </div>
 
-            <button class="btn-desfazer" onclick="desfazer()">CORRIGIR</button>
+            <!-- Botão Corrigir -->
+            <button class="btn-acao-painel btn-desfazer" onclick="desfazer()">CORRIGIR</button>
         </div>
 
         <button id="btn-jogB" class="btn-jogador" onclick="pontuar('B')">
-            <span class="nome-jogador">JOGADOR B</span>
+            <span class="nome-jogador" id="label-nomeB">JOGADOR B</span>
             <span id="pontosB">0</span>
         </button>
     </div>
 
     <script>
-        let configs = { limiteVantagens: "sem_limites", usarTieBreak: true, tipoTb: "infinito", limitePontosTb: 10, setsParaVencer: 2, gamesParaVencerSet: 6 };
+        let configs = { nomeA: "Jogador A", nomeB: "Jogador B", limiteVantagens: "sem_limites", usarTieBreak: true, tipoTb: "infinito", limitePontosTb: 10, setsParaVencer: 2, gamesParaVencerSet: 6 };
         let jogo = { pontosA: 0, pontosB: 0, gamesA: 0, gamesB: 0, setsA: 0, setsB: 0, contadorDeuces: 0, emTieBreak: false, pontosTbA: 0, pontosTbB: 0, historicoSets: [], partidaEncerrada: false, historico: [] };
         const nomesPontos = { 0: "0", 1: "15", 2: "30", 3: "40" };
 
@@ -127,6 +182,8 @@
         }
 
         function iniciarJogo() {
+            configs.nomeA = document.getElementById("cfg-nomeA").value.trim() || "Jogador A";
+            configs.nomeB = document.getElementById("cfg-nomeB").value.trim() || "Jogador B";
             configs.limiteVantagens = document.getElementById("cfg-vantagens").value;
             configs.usarTieBreak = document.getElementById("cfg-tiebreak").value === "sim";
             configs.tipoTb = document.getElementById("cfg-tipo-tb").value;
@@ -134,9 +191,23 @@
             configs.setsParaVencer = parseInt(document.getElementById("cfg-sets").value);
             configs.gamesParaVencerSet = parseInt(document.getElementById("cfg-games").value);
             
+            document.getElementById("label-nomeA").innerText = configs.nomeA;
+            document.getElementById("label-nomeB").innerText = configs.nomeB;
+            
             document.getElementById("tela-config").style.display = "none";
             document.getElementById("tela-placar").style.display = "flex";
             atualizarTela();
+        }
+
+        function voltarAoMenu() {
+            if (confirm("Deseja realmente voltar ao menu? Isso apagará todas as informações do jogo atual.")) {
+                // Zera completamente o estado dinâmico do jogo
+                jogo = { pontosA: 0, pontosB: 0, gamesA: 0, gamesB: 0, setsA: 0, setsB: 0, contadorDeuces: 0, emTieBreak: false, pontosTbA: 0, pontosTbB: 0, historicoSets: [], partidaEncerrada: false, historico: [] };
+                
+                // Retorna para a tela de configurações
+                document.getElementById("tela-placar").style.display = "none";
+                document.getElementById("tela-config").style.display = "flex";
+            }
         }
 
         function salvarHistorico() {
@@ -153,7 +224,14 @@
             salvarHistorico();
 
             if (jogo.emTieBreak) {
-                processarPontuacaoTieBreak(jogador);
+                jogo[`pontosTb${jogador}`]++;
+                let tA = jogo.pontosTbA; let tB = jogo.pontosTbB;
+                if (configs.tipoTb === "com_limite") {
+                    if (tA === configs.limitePontosTb) { colocarSet('A'); atualizarTela(); return; }
+                    if (tB === configs.limitePontosTb) { colocarSet('B'); atualizarTela(); return; }
+                }
+                if (tA >= 7 && (tA - tB) >= 2) { colocarSet('A'); } 
+                else if (tB >= 7 && (tB - tA) >= 2) { colocarSet('B'); }
             } else {
                 processarPontuacaoNormal(jogador, jogador === 'A' ? 'B' : 'A');
             }
@@ -162,62 +240,32 @@
 
         function processarPontuacaoNormal(ganhador, perdedor) {
             let pGanhador = `pontos${ganhador}`; let pPerdedor = `pontos${perdedor}`;
-            if (configs.limiteVantagens === "0" && jogo[pGanhador] === 3 && jogo[pPerdedor] === 3) { ganharGame(ganhador); return; }
-            if (jogo[pGanhador] === 4) { ganharGame(ganhador); return; }
+            if (configs.limiteVantagens === "0" && jogo[pGanhador] === 3 && jogo[pPerdedor] === 3) { colocarGame(ganhador); return; }
+            if (jogo[pGanhador] === 4) { colocarGame(ganhador); return; }
             if (jogo[pPerdedor] === 4) { jogo[pPerdedor] = 3; return; }
             if (jogo[pGanhador] === 3 && jogo[pPerdedor] === 3) {
                 jogo.contadorDeuces++;
-                if (configs.limiteVantagens === "1" && jogo.contadorDeuces > 1) { ganharGame(ganhador); } else { jogo[pGanhador] = 4; }
+                if (configs.limiteVantagens === "1" && jogo.contadorDeuces > 1) { colocarGame(ganhador); } else { jogo[pGanhador] = 4; }
                 return;
             }
-            if (jogo[pGanhador] === 3 && jogo[pPerdedor] < 3) { ganharGame(ganhador); return; }
+            if (jogo[pGanhador] === 3 && jogo[pPerdedor] < 3) { colocarGame(ganhador); return; }
             jogo[pGanhador]++;
         }
 
-        function processarPontuacaoTieBreak(jogador) {
-            jogo[`pontosTb${jogador}`]++;
-            let tA = jogo.pontosTbA; let tB = jogo.pontosTbB;
-
-            // Se o usuário ativou o limite teto máximo de pontos do Tie-break (ex: 10)
-            if (configs.tipoTb === "com_limite") {
-                if (tA === configs.limitePontosTb) { ganharSet('A'); return; }
-                if (tB === configs.limitePontosTb) { ganharSet('B'); return; }
-            }
-
-            // Regra normal de vitória do TB: mínimo de 7 pontos e abrir 2 de vantagem
-            if (tA >= 7 && (tA - tB) >= 2) { ganharSet('A'); } 
-            else if (tB >= 7 && (tB - tA) >= 2) { ganharSet('B'); }
-        }
-
-        function ganharGame(jogador) {
+        function colocarGame(jogador) {
             let gMax = configs.gamesParaVencerSet;
             jogo[`games${jogador}`]++;
             jogo.pontosA = 0; jogo.pontosB = 0; jogo.contadorDeuces = 0;
             let gA = jogo.gamesA; let gB = jogo.gamesB;
 
-            // REGRA ENVIADA POR VOCÊ: Se empatar no limite (ex: 6x6), vai para o Tie-break
-            if (configs.usarTieBreak && gA === gMax && gB === gMax) { 
-                jogo.emTieBreak = true; 
-                jogo.pontosTbA = 0; 
-                jogo.pontosTbB = 0; 
-                return; 
+            if (configs.usarTieBreak && gA === gMax && gB === gMax) { jogo.emTieBreak = true; jogo.pontosTbA = 0; jogo.pontosTbB = 0; return; }
+            if (gA >= gMax || gB >= gMax) {
+                if (gA >= gMax && (gA - gB) >= 2) { colocarSet('A'); } else if (gB >= gMax && (gB - gA) >= 2) { colocarSet('B'); }
             }
-
-            // Se não houver tie-break configurado, precisa abrir obrigatoriamente 2 games após o limite
-            if (!configs.usarTieBreak) {
-                if (gA >= gMax && (gA - gB) >= 2) { ganharSet('A'); } 
-                else if (gB >= gMax && (gB - gA) >= 2) { ganharSet('B'); }
-                return;
-            }
-
-            // REGRA ENVIADA POR VOCÊ: Se chegar a 5x5, quem fizer 7 ganha o set (ex: 7x5)
-            // Se um jogador atingiu o limite de games (ex: 6) e o outro tem menos de (limite - 1, ex: 4), fecha o set.
-            if (gA >= gMax && (gA - gB) >= 2) { ganharSet('A'); }
-            else if (gB >= gMax && (gB - gA) >= 2) { ganharSet('B'); }
         }
 
-        function ganharSet(jogador) {
-            jogo.historicoSets.push({ a: jogo.gamesA, b: jogo.gamesB, vencedor: ...[jogador] });
+        function colocarSet(jogador) {
+            jogo.historicoSets.push({ a: jogo.gamesA, b: jogo.gamesB, vencedor: jogador });
             jogo[`sets${jogador}`]++;
             jogo.gamesA = 0; jogo.gamesB = 0; jogo.emTieBreak = false;
             jogo.pontosTbA = 0; jogo.pontosTbB = 0;
@@ -260,7 +308,10 @@
             document.getElementById("setsPassadosA").innerHTML = htmlSetsA;
             document.getElementById("setsPassadosB").innerHTML = htmlSetsB;
 
-            if (jogo.partidaEncerrada) { alert(`Fim de jogo! Vencedor: Jogador ${jogo.setsA > jogo.setsB ? 'A' : 'B'}`); }
+            if (jogo.partidaEncerrada) { 
+                let nomeVencedor = jogo.setsA > jogo.setsB ? configs.nomeA : configs.nomeB;
+                alert(`Fim de jogo! Vencedor: ${nomeVencedor}`); 
+            }
         }
     </script>
 </body>
