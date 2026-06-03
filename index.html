@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Placar de Tênis Pro Sync</title>
     
-    <!-- Scripts do Firebase (Via CDN para funcionar direto no navegador/watch) -->
+    <!-- Scripts do Firebase Estáveis (Via CDN) -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
@@ -27,7 +27,7 @@
         .divisor { text-align: center; color: #555; margin: 10px 0; font-size: 12px; font-weight: bold; text-transform: uppercase; }
         .btn-conectar { background: #00E0FF; color: #000; font-weight: bold; border: none; padding: 14px; border-radius: 8px; font-size: 16px; cursor: pointer; }
 
-        /* TELA DO PLACAR RESTRUTURADA */
+        /* TELA DO PLACAR */
         #tela-placar { display: none; height: 100vh; width: 100vw; flex-direction: column; position: relative; }
         #info-sala { position: absolute; top: 2px; left: 50%; transform: translateX(-50%); font-size: 10px; color: #00E0FF; font-weight: bold; z-index: 100; background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 4px; }
         
@@ -50,7 +50,7 @@
         .btn-desfazer { color: #ff4444; font-size: 11px; }
         .btn-menu { color: #aaa; font-size: 11px; display: none; }
 
-        /* LAYOUT 1: PORTRAIT (Watch e Celular em pé) */
+        /* LAYOUT PORTRAIT (Watch e Celular em pé) */
         @media (orientation: portrait) {
             #tela-placar { flex-direction: column; }
             #btn-jogA { align-items: flex-start; padding-top: 25px; border-bottom: 1px dashed #333; }
@@ -62,7 +62,7 @@
             .btn-acao-painel { width: 22%; height: 80%; }
         }
 
-        /* LAYOUT 2: LANDSCAPE (Celular deitado) */
+        /* LAYOUT LANDSCAPE (Celular deitado) */
         @media (orientation: landscape) {
             #tela-placar { flex-direction: row; }
             #btn-jogA { border-right: 1px dashed #333; order: 1; }
@@ -184,7 +184,7 @@
     </div>
 
     <script>
-        // Configurações do Firebase injetadas do seu console
+        // Configurações do seu Console Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyCrXBORBx_2Y-ifCPsJGENFSB7MDuDCxDQ",
             authDomain: "placar-tennis.firebaseapp.com",
@@ -195,7 +195,7 @@
             appId: "1:332190545970:web:4c9744882aa538a3b3a42b"
         };
 
-        // Inicializa o Firebase
+        // Inicialização Correta do Firebase Compat
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
@@ -208,7 +208,6 @@
         const nomesPontos = { 0: "0", 1: "15", 2: "30", 3: "40" };
 
         function falarPlacar(texto) {
-            // Apenas o celular (ou dispositivo que não seja o modo controle puro) narra para evitar duplicidade ou bloqueios no watch
             if ('speechSynthesis' in window && !ehRelogio) {
                 window.speechSynthesis.cancel();
                 let fala = new SpeechSynthesisUtterance(texto);
@@ -254,18 +253,18 @@
             }
         }
 
-        // Sincronização: Envia o estado atual do jogo para a nuvem
+        // Correção de Sintaxe de Envio
         function enviarDadosFirebase(textoLocucao = "") {
             if (!salaId) return;
             database.ref('salas/' + salaId).set({
                 configs: configs,
                 jogo: jogo,
                 textoLocucao: textoLocucao,
-                timestamp: Date.now()
+                timestamp: firebase.database.ServerValue.TIMESTAMP
             });
         }
 
-        // Sincronização: Ouve mudanças ocorridas na nuvem
+        // Correção de Sintaxe de Escuta
         function escutarFirebase() {
             database.ref('salas/' + salaId).on('value', (snapshot) => {
                 const dados = snapshot.val();
@@ -274,7 +273,6 @@
                     jogo = dados.jogo;
                     atualizarTelaVisual();
                     
-                    // Dispara a locução de áudio no celular se houver um texto novo
                     if (dados.textoLocucao && dados.textoLocucao !== ultimoPlacarFalado) {
                         ultimoPlacarFalado = dados.textoLocucao;
                         falarPlacar(ultimoPlacarFalado);
@@ -289,7 +287,6 @@
         }
 
         function iniciarJogo() {
-            // Cria ID de sala aleatório de 4 dígitos
             salaId = Math.floor(1000 + Math.random() * 9000).toString();
             ehRelogio = false;
 
@@ -298,16 +295,15 @@
             configs.limiteVantagens = document.getElementById("cfg-vantagens").value;
             configs.usarTieBreak = document.getElementById("cfg-tiebreak").value === "sim";
             configs.tipoTb = document.getElementById("cfg-tipo-tb").value;
-            configs.limitePontosTb = parseInt(document.getElementById("cfg-limite-pontos-tb").value);
-            configs.setsParaVencer = parseInt(document.getElementById("cfg-sets").value);
-            configs.gamesParaVencerSet = parseInt(document.getElementById("cfg-games").value);
+            configs.limitePontosTb = parseInt(document.getElementById("cfg-limite-pontos-tb").value) || 10;
+            configs.setsParaVencer = parseInt(document.getElementById("cfg-sets").value) || 2;
+            configs.gamesParaVencerSet = parseInt(document.getElementById("cfg-games").value) || 6;
             
             document.getElementById("tela-config").style.display = "none";
             document.getElementById("tela-placar").style.display = "flex";
             
             escutarFirebase();
-            let msgInicial = "Jogo iniciado. Boa partida!";
-            enviarDadosFirebase(msgInicial);
+            enviarDadosFirebase("Jogo iniciado. Boa partida!");
         }
 
         function conectarComoRelogio() {
@@ -340,7 +336,7 @@
             jogo.historico.push(JSON.stringify({
                 pontosA: jogo.pontosA, pontosB: jogo.pontosB, gamesA: jogo.gamesA, gamesB: jogo.gamesB,
                 setsA: jogo.setsA, setsB: jogo.setsB, contadorDeuces: jogo.contadorDeuces,
-                emTieBreak: jogo.emTieBreak, pontosTbA: jogo.pontosTbA, pontosTbB: jogo.pontosTbB,
+                emTieBreak: jogo.emTieBreak, pontosTbA: jogo.pontosTbA, pontosTbB: delete jogo.pontosTbB,
                 historicoSets: [...jogo.historicoSets], partidaEncerrada: jogo.partidaEncerrada
             }));
             jogo.ultimaAcaoId = Date.now();
@@ -413,7 +409,7 @@
             }
         }
 
-        function obterPlacarTexto() {
+        function obtenerPlacarTexto() {
             if (jogo.emTieBreak) return { a: jogo.pontosTbA, b: jogo.pontosTbB };
             if (jogo.pontosA === 4) return { a: "Adv", b: "40" };
             if (jogo.pontosB === 4) return { a: "40", b: "Adv" };
