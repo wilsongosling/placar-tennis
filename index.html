@@ -12,8 +12,8 @@
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
         body { background-color: #000; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; overflow: hidden; }
         
-        /* TELA DE CONFIGURAÇÃO */
-        #tela-config { padding: 20px; display: flex; flex-direction: column; gap: 10px; max-width: 400px; margin: 0 auto; height: 100vh; overflow-y: auto; }
+        /* TELA DE CONFIGURAÇÃO (Corrigida com min-height para não cortar em telas menores) */
+        #tela-config { padding: 20px; display: flex; flex-direction: column; gap: 10px; max-width: 400px; margin: 0 auto; min-height: 100vh; overflow-y: auto; }
         h2 { text-align: center; color: #00FF66; margin-bottom: 5px; font-size: 20px; }
         .campo { display: flex; flex-direction: column; gap: 4px; }
         .campo-duplo { display: flex; gap: 10px; }
@@ -219,7 +219,7 @@
                 return `Set para ${nomeSetVencedor}. ${Math.max(ultimoSet.a, ultimoSet.b)} ${Math.min(ultimoSet.a, ultimoSet.b)}.`;
             }
             if (jogo.pontosA === 0 && jogo.pontosB === 0 && !jogo.emTieBreak) {
-                let nomeGameVencedor = jogadorPontuou === 'A' ? configs.nomeA : configs.nomeB;
+                let nomeGameVencedor = playerInvertido(jogadorPontuou) === 'B' ? configs.nomeA : configs.nomeB;
                 return `Game ${nomeGameVencedor}. Games ${Math.max(jogo.gamesA, jogo.gamesB)} ${Math.min(jogo.gamesA, jogo.gamesB)}.`;
             }
             if (jogo.emTieBreak) {
