@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Placar de Tênis Pro</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+        body { background-color: #000; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; overflow: hidden; }
+        
+        /* TELA DE CONFIGURAÇÃO (Otimizada para iPhone) */
+        #tela-config { padding: 20px; display: flex; flex-direction: column; gap: 15px; max-width: 400px; margin: 0 auto; }
+        h2 { text-align: center; color: #00FF66; margin-bottom: 10px; }
+        .campo { display: flex; flex-direction: column; gap: 5px; }
+        label { font-size: 14px; color: #aaa; }
+        select, input { background: #222; color: #fff; border: 1px solid #444; padding: 12px; border-radius: 8px; font-size: 16px; }
+        .btn-iniciar { background: #00FF66; color: #000; font-weight: bold; border: none; padding: 15px; border-radius: 8px; font-size: 18px; cursor: pointer; margin-top: 10px; }
+
+        /* TELA DO PLACAR (Otimizada para Apple Watch / Tela Cheia) */
+        #tela-placar { display: none; height: 100vh; flex-direction: column; position: relative; }
+        
+        /* Botões de toque gigantes (Metade superior e inferior) */
+        .btn-jogador { width: 100%; height: 42vh; border: none; background: transparent; color: #fff; font-size: 40px; font-weight: bold; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; }
+        #btn-jogA { align-items: flex-start; padding-top: 15px; border-bottom: 1px dashed #333; }
+        #btn-jogB { align-items: flex-end; padding-bottom: 15px; border-top: 1px dashed #333; }
+        
+        /* Indicador sutil de clique dentro do botão */
+        .nome-jogador { font-size: 14px; color: #00FF66; position: absolute; }
+        #btn-jogA .nome-jogador { top: 5px; }
+        #btn-jogB .nome-jogador { bottom: 5px; }
+
+        /* PAINEL CENTRAL DE SINALIZAÇÃO DO PLACAR */
+        .painel-central { height: 16vh; background: #111; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; border-top: 2px solid #222; border-bottom: 2px solid #222; position: relative; }
+        
+        /* Mostrador de Pontos Atuais (ex: 30 x 40, ou 4 x 5 no TB) */
+        .display-pontos { display: flex; flex-direction: column; justify-content: center; align-items: center; width: 35%; }
+        .label-pequena { font-size: 9px; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+        .num-pontos { font-size: 24px; font-weight: 800; color: #00FF66; }
+        
+        /* Histórico de Sets e Games (Centro) */
+        .display-sets { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 45%; font-size: 13px; line-height: 1.3; border-left: 1px solid #333; border-right: 1px solid #333; }
+        .linha-set { display: flex; gap: 6px; color: #aaa; }
+        .set-ganho { font-weight: 900; color: #fff; text-decoration: underline; } /* Negrito e destaque para quem ganhou o set */
+        .game-atual { color: #FFA500; font-weight: bold; font-size: 15px; } /* Game atual em laranja */
+
+        /* Botão Desfazer (Undo) pequeno e no canto */
+        .btn-desfazer { width: 20%; height: 100%; background: #222; border: none; color: #ff4444; font-size: 11px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    </style>
+</head>
+<body>
+
+    <div id="tela-config">
+        <h2>Configurar Jogo</h2>
+        <div class="campo">
+            <label>Vantagens no Game:</label>
+            <select id="cfg-vantagens">
+                <option value="sem_limites">Sem Limites (Padrão)</option>
+                <option value="1">Apenas 1 Vantagem</option>
+                <option value="0">Sem Vantagem (Ponto de Ouro)</option>
+            </select>
+        </div>
+        <div class="campo">
+            <label>Tie-break no empate?</label>
+            <select id="cfg-tiebreak">
+                <option value="sim">Sim</option>
+                <option value="nao">Não</option>
+            </select>
+        </div>
+        <div class="campo">
+            <label>Sets por partida (Para vencer):</label>
+            <input type="number" id="cfg-sets" value="2" min="1" max="10">
+        </div>
+        <div class="campo">
+            <label>Games por Set (Para vencer):</label>
+            <input type="number" id="cfg-games" value="6" min="1" max="10">
+        </div>
+        <button class="btn-iniciar" onclick="iniciarJogo()">COMEÇAR JOGO</button>
+    </div>
+
+    <div id="tela-placar">
+        <button id="btn-jogA" class="btn-jogador" onclick="pontuar('A')">
+            <span class="nome-jogador">JOGADOR A</span>
+            <span id="pontosA">0</span>
+        </button>
+
+        <div class="painel-central">
+            <div class="display-pontos">
+                <span id="rotuloPontos" class="label-pequena">PONTOS</span>
+                <span class="num-pontos"><span id="ptA">0</span>:<span id="ptB">0</span></span>
+            </div>
+
+            <div class="display-sets">
+                <span class="label-pequena">GAMES (SETS)</span>
+                <div class="linha-set" id="historicoA">
+                    <span class="game-atual" id="gamesA">0</span>
+                    <span id="setsPassadosA"></span>
+                </div>
+                <div class="linha-set" id="historicoB">
+                    <span class="game-atual" id="gamesB">0</span>
+                    <span id="setsPassadosB"></span>
+                </div>
+            </div>
+
+            <button class="btn-desfazer" onclick="desfazer()">CORRIGIR</button>
+        </div>
+
+        <button id="btn-jogB" class="btn-jogador" onclick="pontuar('B')">
+            <span class="nome-jogador">JOGADOR B</span>
+            <span id="pontosB">0</span>
+        </button>
+    </div>
+
+    <script>
+        // ENGINE DO PLACAR (LÓGICA)
+        let configs = { limiteVantagens: "sem_limites", usarTieBreak: true, setsParaVencer: 2, gamesParaVencerSet: 6 };
+        let jogo = { pontosA: 0, pontosB: 0, gamesA: 0, gamesB: 0, setsA: 0, setsB: 0, contadorDeuces: 0, emTieBreak: false, pontosTbA: 0, pontosTbB: 0, historicoSets: [], partidaEncerrada: false, historico: [] };
+        const nomesPontos = { 0: "0", 1: "15", 2: "30", 3: "40" };
+
+        function iniciarJogo() {
+            configs.limiteVantagens = document.getElementById("cfg-vantagens").value;
+            configs.usarTieBreak = document.getElementById("cfg-tiebreak").value === "sim";
+            configs.setsParaVencer = parseInt(document.getElementById("cfg-sets").value);
+            configs.gamesParaVencerSet = parseInt(document.getElementById("cfg-games").value);
+            
+            document.getElementById("tela-config").style.display = "none";
+            document.getElementById("tela-placar").style.display = "flex";
+            atualizarTela();
+        }
+
+        function salvarHistorico() {
+            jogo.historico.push(JSON.stringify({
+                pontosA: jogo.pontosA, pontosB: jogo.pontosB, gamesA: jogo.gamesA, gamesB: jogo.gamesB,
+                setsA: jogo.setsA, setsB: jogo.setsB, contadorDeuces: jogo.contadorDeuces,
+                emTieBreak: jogo.emTieBreak, pontosTbA: jogo.pontosTbA, pontosTbB: jogo.pontosTbB,
+                historicoSets: [...jogo.historicoSets], partidaEncerrada: jogo.partidaEncerrada
+            }));
+        }
+
+        function pontuar(jogador) {
+            if (jogo.partidaEncerrada) return;
+            salvarHistorico();
+
+            if (jogo.emTieBreak) {
+                let pTb = `pontosTb${jogador}`;
+                jogo[pTb]++;
+                let tA = jogo.pontosTbA; let tB = jogo.pontosTbB;
+                if (jogador === 'A' && tA >= 7 && (tA - tB) >= 2) { ganharSet('A'); } 
+                else if (jogador === 'B' && tB >= 7 && (tB - tA) >= 2) { ganharSet('B'); }
+            } else {
+                processarPontuacaoNormal(jogador, jogador === 'A' ? 'B' : 'A');
+            }
+            atualizarTela();
+        }
+
+        function processarPontuacaoNormal(ganhador, perdedor) {
+            let pGanhador = `pontos${ganhador}`; let pPerdedor = `pontos${perdedor}`;
+            if (configs.limiteVantagens === "0" && jogo[pGanhador] === 3 && jogo[pPerdedor] === 3) { ganharGame(ganhador); return; }
+            if (jogo[pGanhador] === 4) { ganharGame(ganhador); return; }
+            if (jogo[pPerdedor] === 4) { jogo[pPerdedor] = 3; return; }
+            if (jogo[pGanhador] === 3 && jogo[pPerdedor] === 3) {
+                jogo.contadorDeuces++;
+                if (configs.limiteVantagens === "1" && jogo.contadorDeuces > 1) { ganharGame(ganhador); } else { jogo[pGanhador] = 4; }
+                return;
+            }
+            if (jogo[pGanhador] === 3 && jogo[pPerdedor] < 3) { ganharGame(ganhador); return; }
+            jogo[pGanhador]++;
+        }
+
+        function ganharGame(jogador) {
+            let gMax = configs.gamesParaVencerSet;
+            jogo[`games${jogador}`]++;
+            jogo.pontosA = 0; jogo.pontosB = 0; jogo.contadorDeuces = 0;
+            let gA = jogo.gamesA; let gB = jogo.gamesB;
+
+            if (configs.usarTieBreak && gA === gMax && gB === gMax) { jogo.emTieBreak = true; jogo.pontosTbA = 0; jogo.pontosTbB = 0; return; }
+            if (gA >= gMax || gB >= gMax) {
+                if (!configs.usarTieBreak) {
+                    if (gA >= gMax && (gA - gB) >= 2) { ganharSet('A'); } else if (gB >= gMax && (gB - gA) >= 2) { ganharSet('B'); }
+                } else {
+                    if (jogador === 'A' && gA >= gMax) { ganharSet('A'); } else if (jogador === 'B' && gB >= gMax) { ganharSet('B'); }
+                }
+            }
+        }
+
+        function ganharSet(jogador) {
+            jogo.historicoSets.push({ a: jogo.gamesA, b: jogo.gamesB, vencedor: jogador });
+            jogo[`sets${jogador}`]++;
+            jogo.gamesA = 0; jogo.gamesB = 0; jogo.emTieBreak = false;
+            if (jogo.setsA === configs.setsParaVencer || jogo.setsB === configs.setsParaVencer) { jogo.partidaEncerrada = true; }
+        }
+
+        function desfazer() {
+            if (jogo.historico.length > 0) {
+                let e = JSON.parse(jogo.historico.pop());
+                Object.assign(jogo, e);
+                atualizarTela();
+            }
+        }
+
+        function obterPlacarTexto() {
+            if (jogo.emTieBreak) return { a: jogo.pontosTbA, b: jogo.pontosTbB };
+            if (jogo.pontosA === 4) return { a: "Adv", b: "40" };
+            if (jogo.pontosB === 4) return { a: "40", b: "Adv" };
+            if (jogo.pontosA === 3 && jogo.pontosB === 3) return { a: "40", b: "40" };
+            return { a: nomesPontos[jogo.pontosA], b: nomesPontos[jogo.pontosB] };
+        }
+
+        function atualizarTela() {
+            let p = obterPlacarTexto();
+            // Atualiza botões grandes
+            document.getElementById("pontosA").innerText = p.a;
+            document.getElementById("pontosB").innerText = p.b;
+            // Atualiza painel central
+            document.getElementById("ptA").innerText = p.a;
+            document.getElementById("ptB").innerText = p.b;
+            document.getElementById("gamesA").innerText = jogo.gamesA;
+            document.getElementById("gamesB").innerText = jogo.gamesB;
+            document.getElementById("rotuloPontos").innerText = jogo.emTieBreak ? "TIE-BRK" : "PONTOS";
+
+            // Desenha os Sets passados destacando em NEGRITO o vencedor do Set
+            let htmlSetsA = ""; let htmlSetsB = "";
+            jogo.historicoSets.forEach(set => {
+                let classeA = set.vencedor === 'A' ? 'class="set-ganho"' : '';
+                let classeB = set.vencedor === 'B' ? 'class="set-ganho"' : '';
+                htmlSetsA += `<span ${classeA}>${set.a}</span>`;
+                htmlSetsB += `<span ${classeB}>${set.b}</span>`;
+            });
+            document.getElementById("setsPassadosA").innerHTML = htmlSetsA;
+            document.getElementById("setsPassadosB").innerHTML = htmlSetsB;
+
+            if (jogo.partidaEncerrada) { alert(`Fim de jogo! Vencedor: Jogador ${jogo.setsA > jogo.setsB ? 'A' : 'B'}`); }
+        }
+    </script>
+</body>
+</html>
