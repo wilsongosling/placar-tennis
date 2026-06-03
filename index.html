@@ -12,7 +12,7 @@
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
         body { background-color: #000; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; overflow: hidden; }
         
-        /* TELA DE CONFIGURAÇÃO (Corrigida com min-height para não cortar em telas menores) */
+        /* TELA DE CONFIGURAÇÃO */
         #tela-config { padding: 20px; display: flex; flex-direction: column; gap: 10px; max-width: 400px; margin: 0 auto; min-height: 100vh; overflow-y: auto; }
         h2 { text-align: center; color: #00FF66; margin-bottom: 5px; font-size: 20px; }
         .campo { display: flex; flex-direction: column; gap: 4px; }
@@ -101,24 +101,7 @@
                 <option value="0">Sem Vantagem (Ponto de Ouro)</option>
             </select>
         </div>
-        <div class="campo">
-            <label>Tie-break no empate (6x6)?</label>
-            <select id="cfg-tiebreak">
-                <option value="sim">Sim</option>
-                <option value="nao">Não</option>
-            </select>
-        </div>
-        <div class="campo">
-            <label>Tipo de limite do Tie-break:</label>
-            <select id="cfg-tipo-tb" onchange="alternarVisibilidadeLimiteTb()">
-                <option value="infinito">Infinito (Vencer por 2)</option>
-                <option value="com_limite">Com Limite Máximo de Pontos</option>
-            </select>
-        </div>
-        <div class="campo" id="campo-limite-tb" style="display: none;">
-            <label>Pontuação máxima do Tie-break:</label>
-            <input type="number" id="cfg-limite-pontos-tb" value="10" min="5" max="30">
-        </div>
+
         <div class="campo-duplo">
             <div class="campo">
                 <label>Sets p/ vencer:</label>
@@ -126,9 +109,39 @@
             </div>
             <div class="campo">
                 <label>Games por Set:</label>
-                <input type="number" id="cfg-games" value="6" min="1" max="10">
+                <input type="number" id="cfg-games" value="6" min="1" max="10" oninput="atualizarTextosDinamicos()">
             </div>
         </div>
+
+        <div class="campo">
+            <label>Deseja Tie-break?</label>
+            <select id="cfg-tiebreak" onchange="atualizarVisibilidadeTieBreak()">
+                <option value="sim">Sim</option>
+                <option value="nao">Não</option>
+            </select>
+        </div>
+
+        <div id="grupo-opcoes-tiebreak">
+            <div class="campo">
+                <label id="label-regra-tb">Regra do Tie-break:</label>
+                <select id="cfg-regra-tb">
+                    <option value="vencer_por_dois" id="opt-vencer-dois">Vencer por dois (no empate de XxX)</option>
+                    <option value="com_limite" id="opt-com-limite">Direto / Com limite de pontos</option>
+                </select>
+            </div>
+            <div class="campo">
+                <label>Tipo de pontuação do Tie-break:</label>
+                <select id="cfg-tipo-tb" onchange="alternarVisibilidadeLimiteTb()">
+                    <option value="infinito">Infinito (Vencer por 2 pontos de diferença)</option>
+                    <option value="com_limite">Com Limite Máximo de Pontos</option>
+                </select>
+            </div>
+            <div class="campo" id="campo-limite-tb" style="display: none;">
+                <label>Pontuação máxima do Tie-break:</label>
+                <input type="number" id="cfg-limite-pontos-tb" value="10" min="5" max="30">
+            </div>
+        </div>
+
         <button class="btn-iniciar" onclick="iniciarJogo()">COMEÇAR JOGO</button>
 
         <div class="divisor">Ou controle pelo Watch</div>
@@ -194,7 +207,7 @@
         let ehRelogio = false;
         let ultimoPlacarFalado = "";
 
-        let configs = { nomeA: "Jogador A", nomeB: "Jogador B", limiteVantagens: "sem_limites", usarTieBreak: true, tipoTb: "infinito", limitePontosTb: 10, setsParaVencer: 2, gamesParaVencerSet: 6 };
+        let configs = { nomeA: "Jogador A", nomeB: "Jogador B", limiteVantagens: "sem_limites", usarTieBreak: true, regraTb: "vencer_por_dois", tipoTb: "infinito", limitePontosTb: 10, setsParaVencer: 2, gamesParaVencerSet: 6 };
         let jogo = { pontosA: 0, pontosB: 0, gamesA: 0, gamesB: 0, setsA: 0, setsB: 0, contadorDeuces: 0, emTieBreak: false, pontosTbA: 0, pontosTbB: 0, historicoSets: [], partidaEncerrada: false, historico: [] };
         const nomesPontos = { 0: "0", 1: "15", 2: "30", 3: "40" };
 
@@ -273,6 +286,19 @@
             });
         }
 
+        function atualizarTextosDinamicos() {
+            let gMax = parseInt(document.getElementById("cfg-games").value) || 6;
+            
+            let deuceTb = gMax - 1;
+            document.getElementById("opt-com-limite").innerText = `${gMax} ganha direto (Tie-break em ${deuceTb}x${deuceTb})`;
+            document.getElementById("opt-vencer-dois").innerText = `Vencer por dois (Tie-break em ${gMax}x${gMax})`;
+        }
+
+        function atualizarVisibilidadeTieBreak() {
+            const usarTb = document.getElementById("cfg-tiebreak").value === "sim";
+            document.getElementById("grupo-opcoes-tiebreak").style.display = usarTb ? "block" : "none";
+        }
+
         function alternarVisibilidadeLimiteTb() {
             const tipo = document.getElementById("cfg-tipo-tb").value;
             document.getElementById("campo-limite-tb").style.display = tipo === "com_limite" ? "flex" : "none";
@@ -286,6 +312,7 @@
             configs.nomeB = document.getElementById("cfg-nomeB").value.trim() || "Jogador B";
             configs.limiteVantagens = document.getElementById("cfg-vantagens").value;
             configs.usarTieBreak = document.getElementById("cfg-tiebreak").value === "sim";
+            configs.regraTb = document.getElementById("cfg-regra-tb").value;
             configs.tipoTb = document.getElementById("cfg-tipo-tb").value;
             configs.limitePontosTb = parseInt(document.getElementById("cfg-limite-pontos-tb").value) || 10;
             configs.setsParaVencer = parseInt(document.getElementById("cfg-sets").value) || 2;
@@ -375,7 +402,7 @@
             
             if (configs.limiteVantagens === "0" && jogo[pGanhador] === 3 && jogo[pPerdedor] === 3) { colocarGame(ganhador); return; }
             if (jogo[pGanhador] === 4) { colocarGame(ganhador); return; }
-            if (jogo[pPerdedor] === 4) { jogo[pPerdedor] = 3; return; }
+            if (jogo[pPerdedor] === 4) { widget[pPerdedor] = 3; jogo[pPerdedor] = 3; return; }
             if (jogo[pGanhador] === 3 && jogo[pPerdedor] === 3) {
                 jogo.contadorDeuces++;
                 if (configs.limiteVantagens === "1" && jogo.contadorDeuces > 1) { colocarGame(ganhador); } else { jogo[pGanhador] = 4; }
@@ -391,15 +418,29 @@
             jogo.pontosA = 0; jogo.pontosB = 0; jogo.contadorDeuces = 0;
             let gA = jogo.gamesA; let gB = jogo.gamesB;
 
-            if (configs.usarTieBreak && gA === gMax && gB === gMax) { jogo.emTieBreak = true; jogo.pontosTbA = 0; jogo.pontosTbB = 0; return; }
-            if (gA >= gMax || gB >= gMax) {
-                if (gA >= gMax && (gA - gB) >= 2) { colocarSet('A'); } else if (gB >= gMax && (gB - gA) >= 2) { colocarSet('B'); }
+            if (configs.usarTieBreak) {
+                if (configs.regraTb === "com_limite") {
+                    let deuceTb = gMax - 1;
+                    if (gA === deuceTb && gB === deuceTb) { jogo.emTieBreak = true; jogo.pontosTbA = 0; jogo.pontosTbB = 0; return; }
+                } else {
+                    if (gA === gMax && gB === gMax) { jogo.emTieBreak = true; jogo.pontosTbA = 0; jogo.pontosTbB = 0; return; }
+                }
+            }
+
+            if (configs.regraTb === "com_limite") {
+                if (gA >= gMax || gB >= gMax) {
+                    if (gA >= gMax) { colocarSet('A'); } else if (gB >= gMax) { colocarSet('B'); }
+                }
+            } else {
+                if (gA >= gMax || gB >= gMax) {
+                    if (gA >= gMax && (gA - gB) >= 2) { colocarSet('A'); } else if (gB >= gMax && (gB - gA) >= 2) { colocarSet('B'); }
+                }
             }
         }
 
         function colocarSet(jogador) {
             if (!jogo.historicoSets) jogo.historicoSets = [];
-            jogo.historicoSets.push({ a: Math.round(jogo.gamesA), b: Math.round(jogo.gamesB), vencedor: jogador });
+            jogo.historicoSets.push({ a: Math.round(jogo.gamesA), b: Math.round(jogo.gamesB), vencedor: ...[jogador] });
             if (jogador === 'A') jogo.setsA++; else jogo.setsB++;
             jogo.gamesA = 0; jogo.gamesB = 0; jogo.emTieBreak = false;
             jogo.pontosTbA = 0; jogo.pontosTbB = 0;
@@ -449,6 +490,11 @@
             document.getElementById("setsPassadosA").innerHTML = htmlSetsA;
             document.getElementById("setsPassadosB").innerHTML = htmlSetsB;
         }
+
+        // Inicializa os textos corretos assim que a página abre
+        window.onload = function() {
+            atualizarTextosDinamicos();
+        };
     </script>
 </body>
 </html>
