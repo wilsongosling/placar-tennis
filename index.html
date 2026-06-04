@@ -80,7 +80,7 @@ position: absolute;
 top: 0;
 left: 0;
 height: 100vh;
-width: 42vw;
+width: 40vw;
 background: linear-gradient(180deg, rgba(0,45,95,0.95), rgba(0,20,45,0.98));
 border: none;
 border-right: 1px solid rgba(255,255,255,0.25);
@@ -96,7 +96,7 @@ position: absolute;
 top: 0;
 right: 0;
 height: 100vh;
-width: 42vw;
+width: 40vw;
 background: linear-gradient(180deg, rgba(0,80,25,0.95), rgba(0,35,10,0.98));
 border: none;
 border-left: 1px solid rgba(255,255,255,0.25);
@@ -110,9 +110,9 @@ overflow: hidden;
 .relogio-centro {
 position: absolute;
 top: 0;
-left: 42vw;
+left: 40vw;
 height: 100vh;
-width: 16vw;
+width: 20vw;
 background: #000;
 color: #fff;
 overflow: hidden;
@@ -124,7 +124,7 @@ position: absolute;
 top: 9vh;
 left: 50%;
 transform: translateX(-50%);
-font-size: 5.8vh;
+font-size: 7vh;
 line-height: 1;
 font-weight: 600;
 white-space: nowrap;
@@ -157,7 +157,7 @@ position: absolute;
 left: 50%;
 top: 57%;
 transform: translate(-50%, -50%);
-font-size: 24vh;
+font-size: 28vh;
 font-weight: 300;
 line-height: 0.9;
 color: #fff;
@@ -168,7 +168,7 @@ position: absolute;
 left: 50%;
 top: 57%;
 transform: translate(-50%, -50%);
-font-size: 24vh;
+font-size: 28vh;
 font-weight: 300;
 line-height: 0.9;
 color: #fff;
@@ -209,7 +209,7 @@ text-align: center;
 .relogio-linha-set {
 display: flex;
 justify-content: center;
-gap: 2vw;
+gap: 5vw;
 height: 9vh;
 align-items: center;
 }
@@ -1074,10 +1074,6 @@ aviso.style.display = "none";
 function enviarComandoRelogio(tipo, jogador = "") {
 if (!salaId) return;
 
-if (tipo === "ponto") {
-mostrarAvisoRelogio("ENVIADO");
-}
-
 let comando = {
 id: Date.now().toString() + Math.floor(Math.random() * 9999).toString(),
 tipo: tipo,
@@ -1217,10 +1213,7 @@ atualizarTelaVisual();
 iniciarCronometroVisual();
 setTimeout(iniciarCronometroVisual, 300);
 enviarDadosFirebase(`Jogo iniciado. | Sacando: ${nomeDoJogador(jogo.sacadorAtual)}.`);
-setTimeout(() => {
-escutarFirebase();
-escutarComandosRelogio();
-}, 300);
+setTimeout(escutarFirebase, 300);
 }
 
 function conectarComoRelogio() {
@@ -1286,11 +1279,6 @@ jogo.historico.push(JSON.stringify(estado));
 }
 
 function pontuar(jogador) {
-if (ehRelogio) {
-enviarComandoRelogio("ponto", jogador);
-return;
-}
-
 if (jogo.partidaEncerrada) return;
 
 salvarHistorico();
@@ -1706,11 +1694,6 @@ pararCronometroVisual();
 }
 
 function desfazer() {
-if (ehRelogio) {
-enviarComandoRelogio("desfazer");
-return;
-}
-
 if (jogo.historico && jogo.historico.length > 0) {
 let e = JSON.parse(jogo.historico.pop());
 Object.assign(jogo, e);
