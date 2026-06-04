@@ -31,6 +31,7 @@ select, input { background: #222; color: #fff; border: 1px solid #444; padding: 
 
 #tela-placar { display: none; height: 100vh; width: 100vw; flex-direction: column; position: relative; }
 #info-sala { position: absolute; top: 2px; left: 50%; transform: translateX(-50%); font-size: 10px; color: #00E0FF; font-weight: bold; z-index: 100; background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 4px; }
+#link-relogio { position: absolute; top: 22px; left: 50%; transform: translateX(-50%); font-size: 9px; color: #aaa; z-index: 100; background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 4px; max-width: 95vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .btn-jogador { border: none; background: transparent; color: #fff; font-size: 44px; font-weight: bold; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; flex: 1; width: 100%; }
 .nome-jogador { font-size: 13px; color: #00FF66; position: absolute; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; max-width: 90%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -532,6 +533,7 @@ Tênis tradicional: 6 games, melhor de 3 sets, com vantagem e tie-break em 6x6.
 <div id="tela-placar">
 <div id="aviso-troca-lado">TROCA DE LADO</div>
 <div id="info-sala">SALA: ----</div>
+<div id="link-relogio">Link relógio: ----</div>
 
 <button id="btn-jogA" class="btn-jogador" onclick="pontuar('A')">
 <span class="nome-jogador" id="label-nomeA">JOGADOR A</span>
@@ -618,6 +620,7 @@ let salaId = null;
 let ehRelogio = false;
 let ultimoPlacarFalado = "";
 let ultimoComandoRelogio = null;
+let ultimoAvisoVisualRecebido = null;
 let intervaloCronometro = null;
 
 let configs = {
@@ -730,6 +733,7 @@ function apagarPartidaSalva() {
 if (confirm("Apagar a partida salva neste aparelho?")) {
 localStorage.removeItem("placarPro_partidaAtual");
 mostrarBotaoContinuarSeExistir();
+verificarEntradaPorLink();
 }
 }
 
@@ -1126,6 +1130,19 @@ desfazer();
 });
 }
 
+
+function enviarAvisoVisual(texto) {
+if (!salaId) return;
+
+let aviso = {
+id: Date.now().toString() + Math.floor(Math.random() * 9999).toString(),
+texto: texto,
+timestamp: firebase.database.ServerValue.TIMESTAMP
+};
+
+database.ref('salas/' + salaId + '/avisoVisual').set(aviso);
+}
+
 function enviarDadosFirebase(textoLocucao = "") {
 salvarPartidaLocal();
 
@@ -1155,6 +1172,11 @@ configs = dados.configs || configs;
 jogo = dados.jogo;
 atualizarTelaVisual();
 if (document.getElementById("tela-placar").style.display === "flex") iniciarCronometroVisual();
+
+if (dados.avisoVisual && dados.avisoVisual.id && dados.avisoVisual.id !== ultimoAvisoVisualRecebido) {
+ultimoAvisoVisualRecebido = dados.avisoVisual.id;
+mostrarAvisoGrande(dados.avisoVisual.texto || "TROCA DE LADO");
+}
 
 if (dados.textoLocucao && dados.textoLocucao !== ultimoPlacarFalado) {
 ultimoPlacarFalado = dados.textoLocucao;
@@ -1235,6 +1257,36 @@ iniciarCronometroVisual();
 setTimeout(iniciarCronometroVisual, 300);
 enviarDadosFirebase(`Jogo iniciado. | Sacando: ${nomeDoJogador(jogo.sacadorAtual)}.`);
 setTimeout(escutarFirebase, 300);
+}
+
+
+function conectarRelogioDireto(codigoSala) {
+if (!codigoSala) return;
+
+salaId = codigoSala.toString().trim();
+ehRelogio = true;
+
+database.ref('salas/' + salaId).once('value', (snapshot) => {
+if (snapshot.exists()) {
+mostrarTelaRelogioLeve();
+escutarFirebase();
+} else {
+alert("Sala não encontrada!");
+}
+});
+}
+
+function verificarEntradaPorLink() {
+try {
+const params = new URLSearchParams(window.location.search);
+const codigo = params.get("sala");
+
+if (codigo) {
+setTimeout(() => {
+conectarRelogioDireto(codigo);
+}, 500);
+}
+} catch(e) {}
 }
 
 function conectarComoRelogio() {
@@ -1476,6 +1528,7 @@ let textoFalar = gerarTextoLocucao(jogador);
 
 if (jogo.mostrarTrocaLado) {
 mostrarAvisoGrande("TROCA DE LADO");
+enviarAvisoVisual("TROCA DE LADO");
 textoFalar += " | Troca de lado.";
 jogo.mostrarTrocaLado = false;
 }
@@ -1619,6 +1672,9 @@ jogo.contadorDeuces = 0;
 atualizarSacadorAutomatico();
 
 let avisoTrocaPorGame = deveTrocarLadoPorGame();
+if (avisoTrocaPorGame) {
+mostrarAvisoGrande("TROCA DE LADO");
+}
 
 let gA = jogo.gamesA;
 let gB = jogo.gamesB;
@@ -1701,6 +1757,9 @@ if (jogador === 'A') jogo.setsA++;
 else jogo.setsB++;
 
 let avisoTrocaPorSet = deveTrocarLadoPorSet();
+if (avisoTrocaPorSet) {
+mostrarAvisoGrande("TROCA DE LADO");
+}
 
 jogo.gamesA = 0;
 jogo.gamesB = 0;
@@ -1743,6 +1802,11 @@ let p = obterPlacarTexto();
 
 document.getElementById("info-sala").innerText = `SALA: ${salaId || '----'}`;
 
+let linkRelogio = document.getElementById("link-relogio");
+if (linkRelogio && salaId) {
+linkRelogio.innerText = window.location.origin + window.location.pathname + "?sala=" + salaId;
+}
+
 let bolaA = jogo.sacadorAtual === "A" ? "🎾 " : "";
 let bolaB = jogo.sacadorAtual === "B" ? "🎾 " : "";
 
@@ -1780,6 +1844,7 @@ window.onload = function() {
 aplicarPreset();
 atualizarTextosDinamicos();
 mostrarBotaoContinuarSeExistir();
+verificarEntradaPorLink();
 
 setInterval(function() {
 try {
