@@ -1,0 +1,1821 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Placar de Tênis Pro Sync</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+body { background-color: #000; color: #fff; font-family: Arial, sans-serif; overflow-y: auto; overflow-x: hidden; }
+
+#tela-config { padding: 20px; display: flex; flex-direction: column; gap: 10px; max-width: 400px; margin: 0 auto; min-height: 100vh; overflow-y: auto; }
+h2 { text-align: center; color: #00FF66; margin-bottom: 5px; font-size: 20px; }
+.campo { display: flex; flex-direction: column; gap: 4px; }
+.campo-duplo { display: flex; gap: 10px; }
+.campo-duplo .campo { flex: 1; }
+label { font-size: 13px; color: #aaa; }
+select, input { background: #222; color: #fff; border: 1px solid #444; padding: 10px; border-radius: 8px; font-size: 15px; width: 100%; }
+.btn-iniciar { background: #00FF66; color: #000; font-weight: bold; border: none; padding: 14px; border-radius: 8px; font-size: 16px; cursor: pointer; margin-top: 5px; }
+.divisor { text-align: center; color: #555; margin: 10px 0; font-size: 12px; font-weight: bold; text-transform: uppercase; }
+.btn-conectar { background: #00E0FF; color: #000; font-weight: bold; border: none; padding: 14px; border-radius: 8px; font-size: 16px; cursor: pointer; }
+.btn-avancado { background: #181818; color: #00E0FF; border: 1px solid #333; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; text-align: left; }
+#config-avancadas { display: none; flex-direction: column; gap: 10px; border: 1px solid #222; background: #080808; padding: 12px; border-radius: 10px; }
+.grupo-config { border-top: 1px solid #222; padding-top: 10px; display: flex; flex-direction: column; gap: 10px; }
+.grupo-config:first-child { border-top: none; padding-top: 0; }
+.titulo-grupo { color: #00FF66; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.8px; }
+.resumo-modalidade { background: #111; color: #aaa; border: 1px solid #222; border-radius: 8px; padding: 10px; font-size: 12px; line-height: 1.4; }
+
+#tela-placar { display: none; height: 100vh; width: 100vw; flex-direction: column; position: relative; }
+#info-sala { position: absolute; top: 2px; left: 50%; transform: translateX(-50%); font-size: 10px; color: #00E0FF; font-weight: bold; z-index: 100; background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 4px; }
+#link-relogio { position: absolute; top: 22px; left: 50%; transform: translateX(-50%); font-size: 9px; color: #aaa; z-index: 100; background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 4px; max-width: 95vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.btn-jogador { border: none; background: transparent; color: #fff; font-size: 44px; font-weight: bold; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; flex: 1; width: 100%; }
+.nome-jogador { font-size: 13px; color: #00FF66; position: absolute; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; max-width: 90%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.painel-central { background: #111; display: flex; align-items: center; justify-content: space-between; padding: 10px; border: 2px solid #222; z-index: 10; }
+
+.display-pontos { display: flex; flex-direction: column; justify-content: center; align-items: center; }
+.label-pequena { font-size: 9px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; text-align: center; }
+.num-pontos { font-size: 22px; font-weight: 800; color: #00FF66; margin-top: 2px; }
+
+.cronometro {
+font-size: 13px;
+font-weight: bold;
+color: #00E0FF;
+margin-top: 6px;
+letter-spacing: 1px;
+}
+
+.display-sets { display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 13px; border-left: 1px solid #333; border-right: 1px solid #333; height: 100%; flex: 1; margin: 0 10px; }
+.linha-set { display: flex; gap: 6px; color: #888; align-items: center; width: 100%; justify-content: center; }
+.game-atual { color: #FFA500; font-weight: bold; font-size: 16px; margin-right: 4px; min-width: 15px; text-align: center; }
+.set-ganho { font-weight: 900; color: #fff; text-decoration: underline; }
+
+.btn-acao-painel { background: #222; border: none; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 4px; padding: 8px; }
+.btn-desfazer { color: #ff4444; font-size: 11px; }
+.btn-menu { color: #aaa; font-size: 11px; display: flex; }
+
+.btn-relogio { display: none; }
+
+#modo-relogio-leve {
+display: none;
+height: 100vh;
+width: 100vw;
+background: #000;
+color: #fff;
+padding: 0;
+margin: 0;
+overflow: hidden;
+position: fixed;
+top: 0;
+left: 0;
+font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+}
+
+.relogio-coluna-esquerda {
+position: absolute;
+top: 0;
+left: 0;
+height: 100vh;
+width: 40vw;
+background: linear-gradient(180deg, rgba(0,45,95,0.95), rgba(0,20,45,0.98));
+border: none;
+border-right: 1px solid rgba(255,255,255,0.25);
+color: #fff;
+padding: 0;
+margin: 0;
+cursor: pointer;
+overflow: hidden;
+}
+
+.relogio-coluna-direita {
+position: absolute;
+top: 0;
+right: 0;
+height: 100vh;
+width: 40vw;
+background: linear-gradient(180deg, rgba(0,80,25,0.95), rgba(0,35,10,0.98));
+border: none;
+border-left: 1px solid rgba(255,255,255,0.25);
+color: #fff;
+padding: 0;
+margin: 0;
+cursor: pointer;
+overflow: hidden;
+}
+
+.relogio-centro {
+position: absolute;
+top: 0;
+left: 40vw;
+height: 100vh;
+width: 20vw;
+background: #000;
+color: #fff;
+overflow: hidden;
+text-align: center;
+}
+
+.relogio-nome-a {
+position: absolute;
+top: 9vh;
+left: 50%;
+transform: translateX(-50%);
+font-size: 7vh;
+line-height: 1;
+font-weight: 600;
+white-space: nowrap;
+max-width: 36vw;
+overflow: hidden;
+text-overflow: ellipsis;
+}
+
+.relogio-nome-b {
+position: absolute;
+top: 9vh;
+left: 50%;
+transform: translateX(-50%);
+font-size: 7vh;
+line-height: 1;
+font-weight: 600;
+white-space: nowrap;
+max-width: 36vw;
+overflow: hidden;
+text-overflow: ellipsis;
+}
+
+.relogio-bolinha {
+font-size: 5vh;
+margin-left: 1vw;
+}
+
+.relogio-ponto-a {
+position: absolute;
+left: 50%;
+top: 57%;
+transform: translate(-50%, -50%);
+font-size: 28vh;
+font-weight: 300;
+line-height: 0.9;
+color: #fff;
+}
+
+.relogio-ponto-b {
+position: absolute;
+left: 50%;
+top: 57%;
+transform: translate(-50%, -50%);
+font-size: 28vh;
+font-weight: 300;
+line-height: 0.9;
+color: #fff;
+}
+
+.relogio-tempo {
+position: absolute;
+top: 12vh;
+left: 50%;
+transform: translateX(-50%);
+font-size: 4.8vh;
+line-height: 1;
+white-space: nowrap;
+color: #fff;
+}
+
+.relogio-linha-verde {
+position: absolute;
+top: 24vh;
+left: 18%;
+width: 64%;
+height: 0.8vh;
+background: #00FF66;
+border-radius: 10px;
+}
+
+.relogio-sets-centro {
+position: absolute;
+top: 34vh;
+left: 0;
+width: 100%;
+font-size: 7vh;
+line-height: 1.15;
+color: #fff;
+text-align: center;
+}
+
+.relogio-linha-set {
+display: flex;
+justify-content: center;
+gap: 5vw;
+height: 9vh;
+align-items: center;
+}
+
+.relogio-separador-centro {
+position: absolute;
+top: 50vh;
+left: 20%;
+width: 60%;
+height: 1px;
+background: rgba(255,255,255,0.25);
+}
+
+.relogio-set-ganho {
+font-weight: 900;
+text-decoration: underline;
+}
+
+.relogio-corrigir {
+position: absolute;
+left: 50%;
+bottom: 6vh;
+transform: translateX(-50%);
+font-size: 4.2vh;
+line-height: 1.1;
+color: #ddd;
+background: transparent;
+border: none;
+width: 100%;
+cursor: pointer;
+padding: 0;
+margin: 0;
+z-index: 4;
+}
+
+.relogio-icone-corrigir {
+display: block;
+font-size: 5vh;
+margin-bottom: 1vh;
+}
+
+#relogio-aviso {
+display: none;
+position: absolute;
+left: 50%;
+top: 50%;
+transform: translate(-50%, -50%);
+background: #00FF66;
+color: #000;
+font-size: 7vh;
+font-weight: 900;
+text-align: center;
+padding: 2vh 4vw;
+border-radius: 8px;
+z-index: 999;
+white-space: nowrap;
+}
+
+/* Apple Watch menor */
+@media (max-height: 190px) {
+.relogio-nome-a,
+.relogio-nome-b {
+font-size: 5.5vh;
+top: 8vh;
+}
+
+.relogio-ponto-a,
+.relogio-ponto-b {
+font-size: 25vh;
+}
+
+.relogio-tempo {
+font-size: 4vh;
+top: 11vh;
+}
+
+.relogio-linha-verde {
+top: 23vh;
+}
+
+.relogio-sets-centro {
+font-size: 5.8vh;
+top: 33vh;
+}
+
+.relogio-linha-set {
+height: 8vh;
+gap: 4vw;
+}
+
+.relogio-corrigir {
+font-size: 3.5vh;
+bottom: 5vh;
+}
+
+.relogio-icone-corrigir {
+font-size: 4vh;
+}
+}
+
+@media (orientation: portrait) {
+#tela-placar { flex-direction: column; }
+#btn-jogA { align-items: flex-start; padding-top: 25px; border-bottom: 1px dashed #333; }
+#btn-jogB { align-items: flex-end; padding-bottom: 25px; border-top: 1px dashed #333; }
+#btn-jogA .nome-jogador { top: 8px; }
+#btn-jogB .nome-jogador { bottom: 8px; }
+.painel-central { height: 16vh; width: 100vw; flex-direction: row; }
+.display-pontos { width: 30%; }
+.btn-acao-painel { width: 22%; height: 80%; }
+}
+
+@media (orientation: landscape) {
+#tela-placar { flex-direction: row; }
+#btn-jogA { border-right: 1px dashed #333; order: 1; }
+.painel-central { width: 28vw; height: 100vh; flex-direction: column; justify-content: space-around; order: 2; border-left: 2px solid #222; border-right: 2px solid #222; padding: 20px 10px; }
+#btn-jogB { border-left: 1px dashed #333; order: 3; }
+.nome-jogador { top: 15px !important; bottom: auto !important; font-size: 16px; }
+.btn-jogador { font-size: 70px; }
+.display-pontos { width: 100%; }
+.display-sets { border-left: none; border-right: none; border-top: 1px solid #333; border-bottom: 1px solid #333; width: 100%; padding: 15px 0; margin: 15px 0; }
+.linha-set { font-size: 16px; }
+.game-atual { font-size: 20px; }
+.btn-acao-painel { width: 90%; height: 40px; font-size: 13px; }
+}
+</style>
+</head>
+
+<body>
+
+<div id="tela-config">
+<h2>Configurar Jogo</h2>
+
+<div id="continuar-partida" class="resumo-modalidade" style="display:none;">
+Existe uma partida salva neste aparelho.
+<button type="button" class="btn-iniciar" style="margin-top:8px;" onclick="continuarPartidaSalva()">CONTINUAR PARTIDA</button>
+<button type="button" class="btn-avancado" style="margin-top:6px; width:100%;" onclick="apagarPartidaSalva()">APAGAR PARTIDA SALVA</button>
+</div>
+
+<div class="campo-duplo">
+<div class="campo">
+<label>Jogador A:</label>
+<input type="text" id="cfg-nomeA" value="Jogador A" maxlength="12">
+</div>
+<div class="campo">
+<label>Jogador B:</label>
+<input type="text" id="cfg-nomeB" value="Jogador B" maxlength="12">
+</div>
+</div>
+
+<div class="campo">
+<label>Modalidade:</label>
+<select id="cfg-modalidade" onchange="aplicarPreset()">
+<option value="tenis">Tênis Tradicional</option>
+<option value="beach">Beach Tennis</option>
+<option value="padel">Padel</option>
+<option value="fast4">Fast4</option>
+<option value="proset8">Pro Set 8 Games</option>
+<option value="personalizado">Personalizado</option>
+</select>
+</div>
+
+<div id="resumo-modalidade" class="resumo-modalidade">
+Tênis tradicional: 6 games, melhor de 3 sets, com vantagem e tie-break em 6x6.
+</div>
+
+<button type="button" id="btn-avancado" class="btn-avancado" onclick="alternarConfiguracoesAvancadas()">▶ Configurações Avançadas</button>
+
+<div id="config-avancadas">
+
+<div class="grupo-config">
+<div class="titulo-grupo">Áudio</div>
+<div class="campo">
+<label>Áudio do placar:</label>
+<select id="cfg-audio">
+<option value="completo">Completo</option>
+<option value="games_sets">Apenas Games e Sets</option>
+<option value="avisos">Apenas Avisos</option>
+<option value="desligado">Desligado</option>
+</select>
+</div>
+
+<div class="campo">
+<label>Cronômetro:</label>
+<select id="cfg-cronometro">
+<option value="sim">Mostrar duração da partida</option>
+<option value="nao">Ocultar duração da partida</option>
+</select>
+</div>
+
+<div class="campo">
+<label>Avisos importantes:</label>
+<select id="cfg-avisos-pontos">
+<option value="sim">Mostrar Set Point e Match Point</option>
+<option value="nao">Desativar avisos</option>
+</select>
+</div>
+</div>
+
+<div class="grupo-config">
+<div class="titulo-grupo">Saque e lado</div>
+<div class="campo-duplo">
+<div class="campo">
+<label>Quem saca primeiro:</label>
+<select id="cfg-sacador-inicial">
+<option value="A">Jogador A</option>
+<option value="B">Jogador B</option>
+</select>
+</div>
+<div class="campo">
+<label>Troca de saque:</label>
+<select id="cfg-troca-saque">
+<option value="1">A cada game</option>
+<option value="2">A cada 2 games</option>
+<option value="4">A cada 4 games</option>
+<option value="manual">Manual</option>
+</select>
+</div>
+</div>
+
+<div class="campo">
+<label>Troca de lado:</label>
+<select id="cfg-troca-lado">
+<option value="impares">Games ímpares</option>
+<option value="set">Final de cada set</option>
+<option value="ambos">Games ímpares + Final do set</option>
+<option value="desativado">Desativada</option>
+</select>
+</div>
+</div>
+
+<div class="grupo-config">
+<div class="titulo-grupo">Regras do jogo</div>
+<div class="campo-duplo">
+<div class="campo">
+<label>Games por Set:</label>
+<input type="number" id="cfg-games" value="6" min="1" max="10" oninput="atualizarTextosDinamicos()">
+</div>
+<div class="campo">
+<label>Sets p/ vencer:</label>
+<input type="number" id="cfg-sets" value="2" min="1" max="10">
+</div>
+</div>
+
+<div class="campo">
+<label>Vantagens no Game:</label>
+<select id="cfg-vantagens">
+<option value="sem_limites">Sem Limites (Padrão)</option>
+<option value="1">Apenas 1 Vantagem</option>
+<option value="0">Sem Vantagem (Ponto de Ouro)</option>
+</select>
+</div>
+
+<div class="campo">
+<label>Deseja Tie-break?</label>
+<select id="cfg-tiebreak" onchange="atualizarVisibilidadeTieBreak()">
+<option value="sim">Sim</option>
+<option value="nao">Não</option>
+</select>
+</div>
+
+<div id="grupo-opcoes-tiebreak">
+<div class="campo">
+<label>Regra do Tie-break:</label>
+<select id="cfg-regra-tb">
+<option value="vencer_por_dois" id="opt-vencer-dois">Vencer por dois</option>
+<option value="com_limite" id="opt-com-limite">Direto / Com limite</option>
+</select>
+</div>
+
+<div class="campo">
+<label>Tipo de pontuação do Tie-break:</label>
+<select id="cfg-tipo-tb" onchange="alternarVisibilidadeLimiteTb()">
+<option value="infinito">Infinito (Vencer por 2 pontos de diferença)</option>
+<option value="com_limite">Com Limite Máximo de Pontos</option>
+</select>
+</div>
+
+<div class="campo" id="campo-limite-tb" style="display: none;">
+<label>Pontuação máxima do Tie-break:</label>
+<input type="number" id="cfg-limite-pontos-tb" value="10" min="5" max="30">
+</div>
+</div>
+</div>
+
+</div>
+
+<button class="btn-iniciar" onclick="iniciarJogo()">COMEÇAR JOGO</button>
+
+<div class="divisor">Ou controle pelo Watch</div>
+
+<div class="campo">
+<label>Código da Sala:</label>
+<input type="number" id="cfg-codigo-sala" placeholder="Ex: 4829">
+</div>
+
+<button class="btn-conectar" onclick="conectarComoRelogio()">CONECTAR VIA RELÓGIO</button>
+</div>
+
+<div id="tela-placar">
+<div id="aviso-troca-lado">TROCA DE LADO</div>
+<div id="info-sala">SALA: ----</div>
+<div id="link-relogio">Link relógio: ----</div>
+
+<button id="btn-jogA" class="btn-jogador" onclick="pontuar('A')">
+<span class="nome-jogador" id="label-nomeA">JOGADOR A</span>
+<span id="pontosA">0</span>
+</button>
+
+<div class="painel-central">
+<button class="btn-acao-painel btn-menu" onclick="voltarAoMenu()">MENU</button>
+
+<div class="display-pontos">
+<span id="rotuloPontos" class="label-pequena">PONTOS</span>
+<span class="num-pontos"><span id="ptA">0</span>:<span id="ptB">0</span></span>
+<span id="cronometro" class="cronometro">00:00:00</span>
+</div>
+
+<div class="display-sets">
+<span class="label-pequena">GAMES (SETS)</span>
+<div class="linha-set">
+<span class="game-atual" id="gamesA">0</span>
+<span id="setsPassadosA"></span>
+</div>
+<div class="linha-set">
+<span class="game-atual" id="gamesB">0</span>
+<span id="setsPassadosB"></span>
+</div>
+</div>
+
+<button class="btn-acao-painel btn-desfazer" onclick="desfazer()">CORRIGIR</button>
+<button class="btn-acao-painel btn-menu" onclick="trocarSacadorManual()">SACADOR</button>
+</div>
+
+<button id="btn-jogB" class="btn-jogador" onclick="pontuar('B')">
+<span class="nome-jogador" id="label-nomeB">JOGADOR B</span>
+<span id="pontosB">0</span>
+</button>
+</div>
+
+<div id="modo-relogio-leve">
+<div id="relogio-aviso">TROCA DE LADO</div>
+
+<button class="relogio-coluna-esquerda" onclick="pontuar('A')">
+<div id="relogio-nomeA" class="relogio-nome-a">João 🎾</div>
+<div id="relogio-pontoA" class="relogio-ponto-a">40</div>
+</button>
+
+<div class="relogio-centro">
+<div id="relogio-tempo" class="relogio-tempo">0:00:00</div>
+<div class="relogio-linha-verde"></div>
+
+<div id="relogio-sets-centro" class="relogio-sets-centro">
+<div class="relogio-linha-set"><span>4</span><span>2</span></div>
+<div class="relogio-linha-set"><span class="relogio-set-ganho">6</span><span>1</span></div>
+</div>
+
+<div class="relogio-separador-centro"></div>
+
+<button class="relogio-corrigir" onclick="desfazer()">
+<span class="relogio-icone-corrigir">✎</span>
+Corrigir
+</button>
+</div>
+
+<button class="relogio-coluna-direita" onclick="pontuar('B')">
+<div id="relogio-nomeB" class="relogio-nome-b">Pedro</div>
+<div id="relogio-pontoB" class="relogio-ponto-b">15</div>
+</button>
+</div>
+
+<script>
+const firebaseConfig = {
+apiKey: "AIzaSyCrXBORBx_2Y-ifCPsJGENFSB7MDuDCxDQ",
+authDomain: "placar-tennis.firebaseapp.com",
+databaseURL: "https://placar-tennis-default-rtdb.firebaseio.com",
+projectId: "placar-tennis",
+storageBucket: "placar-tennis.firebasestorage.app",
+messagingSenderId: "332190545970",
+appId: "1:332190545970:web:4c9744882aa538a3b3a42b"
+};
+
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+
+let salaId = null;
+let ehRelogio = false;
+let ultimoPlacarFalado = "";
+let ultimoComandoRelogio = null;
+let intervaloCronometro = null;
+
+let configs = {
+nomeA: "Jogador A",
+nomeB: "Jogador B",
+modalidade: "tenis",
+modoAudio: "completo",
+sacadorInicial: "A",
+trocaSaque: "1",
+trocaLado: "impares",
+mostrarCronometro: true,
+avisosPontos: true,
+limiteVantagens: "sem_limites",
+usarTieBreak: true,
+regraTb: "vencer_por_dois",
+tipoTb: "infinito",
+limitePontosTb: 10,
+setsParaVencer: 2,
+gamesParaVencerSet: 6
+};
+
+let jogo = {
+pontosA: 0,
+pontosB: 0,
+gamesA: 0,
+gamesB: 0,
+setsA: 0,
+setsB: 0,
+contadorDeuces: 0,
+emTieBreak: false,
+pontosTbA: 0,
+pontosTbB: 0,
+sacadorAtual: "A",
+ultimoAvisoTrocaLado: "",
+mostrarTrocaLado: false,
+inicioPartida: null,
+tempoFinalPartida: null,
+historicoSets: [],
+partidaEncerrada: false,
+historico: []
+};
+
+const nomesPontos = { 0: "0", 1: "15", 2: "30", 3: "40" };
+
+function salvarPartidaLocal() {
+try {
+localStorage.setItem("placarPro_partidaAtual", JSON.stringify({
+configs: configs,
+jogo: jogo,
+salaId: salaId,
+ehRelogio: ehRelogio
+}));
+} catch(e) {}
+}
+
+function existePartidaSalva() {
+try {
+let dados = localStorage.getItem("placarPro_partidaAtual");
+if (!dados) return false;
+
+let obj = JSON.parse(dados);
+return obj && obj.jogo && !obj.jogo.partidaEncerrada;
+} catch(e) {
+return false;
+}
+}
+
+function mostrarBotaoContinuarSeExistir() {
+let bloco = document.getElementById("continuar-partida");
+if (!bloco) return;
+
+bloco.style.display = existePartidaSalva() ? "block" : "none";
+}
+
+function continuarPartidaSalva() {
+try {
+let dados = localStorage.getItem("placarPro_partidaAtual");
+if (!dados) {
+alert("Nenhuma partida salva encontrada.");
+return;
+}
+
+let obj = JSON.parse(dados);
+
+configs = obj.configs || configs;
+jogo = obj.jogo || jogo;
+salaId = obj.salaId || null;
+ehRelogio = obj.ehRelogio || false;
+
+document.getElementById("tela-config").style.display = "none";
+document.getElementById("tela-placar").style.display = "flex";
+
+atualizarTelaVisual();
+atualizarTelaRelogioLeve();
+iniciarCronometroVisual();
+
+if (salaId) {
+setTimeout(() => {
+escutarFirebase();
+escutarComandosRelogio();
+}, 300);
+}
+
+} catch(e) {
+alert("Não foi possível continuar a partida salva.");
+}
+}
+
+function apagarPartidaSalva() {
+if (confirm("Apagar a partida salva neste aparelho?")) {
+localStorage.removeItem("placarPro_partidaAtual");
+mostrarBotaoContinuarSeExistir();
+verificarEntradaPorLink();
+}
+}
+
+function formatarTempo(ms) {
+if (!ms || ms < 0) ms = 0;
+
+let totalSegundos = Math.floor(ms / 1000);
+let horas = Math.floor(totalSegundos / 3600);
+let minutos = Math.floor((totalSegundos % 3600) / 60);
+let segundos = totalSegundos % 60;
+
+return String(horas).padStart(2, "0") + ":" + String(minutos).padStart(2, "0") + ":" + String(segundos).padStart(2, "0");
+}
+
+function atualizarCronometro() {
+let el = document.getElementById("cronometro");
+if (!el) return;
+
+if (!configs.mostrarCronometro) {
+el.style.display = "none";
+return;
+}
+
+el.style.display = "block";
+
+if (!jogo.inicioPartida) {
+jogo.inicioPartida = new Date().getTime();
+}
+
+let tempoBase = jogo.partidaEncerrada && jogo.tempoFinalPartida ? jogo.tempoFinalPartida : new Date().getTime();
+el.innerText = formatarTempo(tempoBase - jogo.inicioPartida);
+}
+
+function iniciarCronometroVisual() {
+if (intervaloCronometro) {
+clearInterval(intervaloCronometro);
+}
+
+atualizarCronometro();
+
+intervaloCronometro = setInterval(function() {
+atualizarCronometro();
+salvarPartidaLocal();
+}, 1000);
+}
+
+function pararCronometroVisual() {
+if (intervaloCronometro) {
+clearInterval(intervaloCronometro);
+intervaloCronometro = null;
+}
+atualizarCronometro();
+}
+
+function alternarConfiguracoesAvancadas() {
+const bloco = document.getElementById("config-avancadas");
+const botao = document.getElementById("btn-avancado");
+
+if (bloco.style.display === "flex") {
+bloco.style.display = "none";
+botao.innerText = "▶ Configurações Avançadas";
+} else {
+bloco.style.display = "flex";
+botao.innerText = "▼ Configurações Avançadas";
+}
+}
+
+function atualizarResumoModalidade() {
+const modalidade = document.getElementById("cfg-modalidade").value;
+let texto = "";
+
+if (modalidade === "tenis") texto = "Tênis tradicional: 6 games, melhor de 3 sets, com vantagem e tie-break em 6x6.";
+if (modalidade === "beach") texto = "Beach Tennis: 6 games, melhor de 3 sets, sem vantagem e tie-break em 6x6.";
+if (modalidade === "padel") texto = "Padel: 6 games, melhor de 3 sets, com vantagem e tie-break em 6x6.";
+if (modalidade === "fast4") texto = "Fast4: 4 games, melhor de 3 sets, sem vantagem e tie-break rápido.";
+if (modalidade === "proset8") texto = "Pro Set 8 Games: vence com 8 games, 7x7 vai até 9, 8x8 vai para tie-break até 7.";
+if (modalidade === "personalizado") texto = "Personalizado: ajuste manualmente as regras nas configurações avançadas.";
+
+document.getElementById("resumo-modalidade").innerText = texto;
+}
+
+function aplicarPreset() {
+const modalidade = document.getElementById("cfg-modalidade").value;
+
+if (modalidade === "tenis") {
+document.getElementById("cfg-games").value = 6;
+document.getElementById("cfg-sets").value = 2;
+document.getElementById("cfg-vantagens").value = "sem_limites";
+document.getElementById("cfg-tiebreak").value = "sim";
+document.getElementById("cfg-regra-tb").value = "vencer_por_dois";
+document.getElementById("cfg-tipo-tb").value = "infinito";
+document.getElementById("cfg-limite-pontos-tb").value = 7;
+document.getElementById("cfg-troca-saque").value = "1";
+document.getElementById("cfg-troca-lado").value = "impares";
+}
+
+if (modalidade === "beach") {
+document.getElementById("cfg-games").value = 6;
+document.getElementById("cfg-sets").value = 2;
+document.getElementById("cfg-vantagens").value = "0";
+document.getElementById("cfg-tiebreak").value = "sim";
+document.getElementById("cfg-regra-tb").value = "vencer_por_dois";
+document.getElementById("cfg-tipo-tb").value = "infinito";
+document.getElementById("cfg-limite-pontos-tb").value = 7;
+document.getElementById("cfg-troca-saque").value = "1";
+document.getElementById("cfg-troca-lado").value = "impares";
+}
+
+if (modalidade === "padel") {
+document.getElementById("cfg-games").value = 6;
+document.getElementById("cfg-sets").value = 2;
+document.getElementById("cfg-vantagens").value = "sem_limites";
+document.getElementById("cfg-tiebreak").value = "sim";
+document.getElementById("cfg-regra-tb").value = "vencer_por_dois";
+document.getElementById("cfg-tipo-tb").value = "infinito";
+document.getElementById("cfg-limite-pontos-tb").value = 7;
+document.getElementById("cfg-troca-saque").value = "1";
+document.getElementById("cfg-troca-lado").value = "impares";
+}
+
+if (modalidade === "fast4") {
+document.getElementById("cfg-games").value = 4;
+document.getElementById("cfg-sets").value = 2;
+document.getElementById("cfg-vantagens").value = "0";
+document.getElementById("cfg-tiebreak").value = "sim";
+document.getElementById("cfg-regra-tb").value = "com_limite";
+document.getElementById("cfg-tipo-tb").value = "infinito";
+document.getElementById("cfg-limite-pontos-tb").value = 7;
+document.getElementById("cfg-troca-saque").value = "1";
+document.getElementById("cfg-troca-lado").value = "impares";
+}
+
+if (modalidade === "proset8") {
+document.getElementById("cfg-games").value = 8;
+document.getElementById("cfg-sets").value = 1;
+document.getElementById("cfg-vantagens").value = "sem_limites";
+document.getElementById("cfg-tiebreak").value = "sim";
+document.getElementById("cfg-regra-tb").value = "vencer_por_dois";
+document.getElementById("cfg-tipo-tb").value = "infinito";
+document.getElementById("cfg-limite-pontos-tb").value = 7;
+document.getElementById("cfg-troca-saque").value = "1";
+document.getElementById("cfg-troca-lado").value = "impares";
+}
+
+atualizarVisibilidadeTieBreak();
+alternarVisibilidadeLimiteTb();
+atualizarTextosDinamicos();
+atualizarResumoModalidade();
+}
+
+function podeFalar(texto) {
+if (configs.modoAudio === "desligado") return false;
+
+if (configs.modoAudio === "avisos") {
+return texto.includes("Vitória") || texto.includes("Fim") || texto.includes("Tie-break") || texto.includes("Troca") || texto.includes("sacador") || texto.includes("MATCH POINT") || texto.includes("SET POINT");
+}
+
+if (configs.modoAudio === "games_sets") {
+return texto.includes("Game") || texto.includes("Set") || texto.includes("Vitória") || texto.includes("Fim") || texto.includes("Tie-break") || texto.includes("Troca") || texto.includes("sacador") || texto.includes("MATCH POINT") || texto.includes("SET POINT");
+}
+
+return true;
+}
+
+function falarPlacar(texto) {
+if (!podeFalar(texto)) return;
+
+if ('speechSynthesis' in window && !ehRelogio) {
+window.speechSynthesis.cancel();
+
+let partes = texto
+.split("|")
+.map(p => p.trim())
+.filter(p => p.length > 0);
+
+let indice = 0;
+
+function atrasoDepoisDaFrase(frase) {
+if (frase.includes("Troca de lado")) return 1100;
+if (frase.includes("MATCH POINT")) return 1200;
+if (frase.includes("SET POINT")) return 1000;
+if (frase.includes("Sacando")) return 900;
+if (frase.includes("Game")) return 850;
+return 650;
+}
+
+function velocidadeDaFrase(frase) {
+if (frase.includes("MATCH POINT")) return 0.98;
+if (frase.includes("SET POINT")) return 1.00;
+if (frase.includes("Troca de lado")) return 1.00;
+if (frase.includes("Sacando")) return 1.02;
+return 1.05;
+}
+
+function falarParte() {
+if (indice >= partes.length) return;
+
+let frase = partes[indice];
+
+let fala = new SpeechSynthesisUtterance(frase);
+fala.lang = 'pt-BR';
+fala.rate = velocidadeDaFrase(frase);
+fala.pitch = 1;
+
+fala.onend = function() {
+indice++;
+setTimeout(falarParte, atrasoDepoisDaFrase(frase));
+};
+
+window.speechSynthesis.speak(fala);
+}
+
+falarParte();
+}
+}
+
+function nomeDoJogador(jogador) {
+return jogador === "A" ? configs.nomeA : configs.nomeB;
+}
+
+function textoPlacarGamesFalado() {
+let gA = jogo.gamesA;
+let gB = jogo.gamesB;
+
+if (gA === gB) {
+return `${gA} iguais`;
+}
+
+if (gA > gB) {
+return `${gA} a ${gB}. ${configs.nomeA}`;
+}
+
+return `${gB} a ${gA}. ${configs.nomeB}`;
+}
+
+function textoPlacarSetFalado(set) {
+let a = Number(set.a || 0);
+let b = Number(set.b || 0);
+
+if (a === b) {
+return `${a} iguais`;
+}
+
+if (a > b) {
+return `${a} a ${b}. ${configs.nomeA}`;
+}
+
+return `${b} a ${a}. ${configs.nomeB}`;
+}
+
+function textoPontosDentroDoGame() {
+let p = obterPlacarTexto();
+
+if (p.a === "Adv") return `Vantagem ${configs.nomeA}.`;
+if (p.b === "Adv") return `Vantagem ${configs.nomeB}.`;
+
+if (jogo.pontosA === 3 && jogo.pontosB === 3) return "Iguais.";
+if (jogo.pontosA === jogo.pontosB && jogo.pontosA > 0) return `${nomesPontos[jogo.pontosA]} iguais.`;
+
+if (configs.trocaSaque !== "manual") {
+if (jogo.sacadorAtual === "A") {
+return `${nomesPontos[jogo.pontosA]} ${nomesPontos[jogo.pontosB]}.`;
+} else {
+return `${nomesPontos[jogo.pontosB]} ${nomesPontos[jogo.pontosA]}.`;
+}
+}
+
+if (jogo.pontosA > jogo.pontosB) {
+return `${nomesPontos[jogo.pontosA]} ${nomesPontos[jogo.pontosB]}, ${configs.nomeA}.`;
+} else {
+return `${nomesPontos[jogo.pontosB]} ${nomesPontos[jogo.pontosA]}, ${configs.nomeB}.`;
+}
+}
+
+function gerarTextoLocucao(jogadorPontuou) {
+if (jogo.partidaEncerrada) {
+let nomeVencedor = jogo.setsA > jogo.setsB ? configs.nomeA : configs.nomeB;
+return `Vitória de ${nomeVencedor}! Fim de jogo.`;
+}
+
+if (jogo.pontosA === 0 && jogo.pontosB === 0 && jogo.gamesA === 0 && jogo.gamesB === 0 && jogo.historicoSets && jogo.historicoSets.length > 0) {
+let ultimoSet = jogo.historicoSets[jogo.historicoSets.length - 1];
+let nomeSetVencedor = ultimoSet.vencedor === 'A' ? configs.nomeA : configs.nomeB;
+return `Set para ${nomeSetVencedor}. | ${textoPlacarSetFalado(ultimoSet)}. | Sacando: ${nomeDoJogador(jogo.sacadorAtual)}.`;
+}
+
+if (jogo.pontosA === 0 && jogo.pontosB === 0 && !jogo.emTieBreak) {
+let nomeGameVencedor = jogadorPontuou === 'A' ? configs.nomeA : configs.nomeB;
+return `Game ${nomeGameVencedor}. | ${textoPlacarGamesFalado()}. | Sacando: ${nomeDoJogador(jogo.sacadorAtual)}.`;
+}
+
+if (jogo.emTieBreak) {
+let tA = jogo.pontosTbA;
+let tB = jogo.pontosTbB;
+if (tA === tB) return `${tA} iguais.`;
+return tA > tB ? `${tA} ${tB}, ${configs.nomeA}.` : `${tB} ${tA}, ${configs.nomeB}.`;
+}
+
+return textoPontosDentroDoGame();
+}
+
+
+function mostrarTelaRelogioLeve() {
+document.getElementById("tela-config").style.display = "none";
+document.getElementById("tela-placar").style.display = "none";
+document.getElementById("modo-relogio-leve").style.display = "flex";
+}
+
+function atualizarTelaRelogioLeve() {
+let tela = document.getElementById("modo-relogio-leve");
+if (!tela) return;
+
+let p = obterPlacarTexto();
+
+let bolaA = jogo.sacadorAtual === "A" ? " 🎾" : "";
+let bolaB = jogo.sacadorAtual === "B" ? " 🎾" : "";
+
+document.getElementById("relogio-nomeA").innerText = (configs.nomeA || "Jogador A") + bolaA;
+document.getElementById("relogio-nomeB").innerText = (configs.nomeB || "Jogador B") + bolaB;
+
+document.getElementById("relogio-pontoA").innerText = p.a;
+document.getElementById("relogio-pontoB").innerText = p.b;
+
+let tempo = "0:00:00";
+if (jogo.inicioPartida) {
+let agora = jogo.partidaEncerrada && jogo.tempoFinalPartida ? jogo.tempoFinalPartida : new Date().getTime();
+let ms = agora - jogo.inicioPartida;
+let totalSegundos = Math.floor(ms / 1000);
+let horas = Math.floor(totalSegundos / 3600);
+let minutos = Math.floor((totalSegundos % 3600) / 60);
+let segundos = totalSegundos % 60;
+tempo = horas + ":" + String(minutos).padStart(2, "0") + ":" + String(segundos).padStart(2, "0");
+}
+document.getElementById("relogio-tempo").innerText = tempo;
+
+let htmlSets = "";
+
+if (jogo.historicoSets && jogo.historicoSets.length > 0) {
+jogo.historicoSets.forEach(set => {
+let classeA = set.vencedor === "A" ? 'class="relogio-set-ganho"' : "";
+let classeB = set.vencedor === "B" ? 'class="relogio-set-ganho"' : "";
+htmlSets += `<div class="relogio-linha-set"><span ${classeA}>${set.a}</span><span ${classeB}>${set.b}</span></div>`;
+});
+}
+
+htmlSets += `<div class="relogio-linha-set"><span>${jogo.gamesA || 0}</span><span>${jogo.gamesB || 0}</span></div>`;
+
+document.getElementById("relogio-sets-centro").innerHTML = htmlSets;
+}
+
+function mostrarAvisoRelogio(texto) {
+let aviso = document.getElementById("relogio-aviso");
+if (!aviso) return;
+
+aviso.innerText = texto;
+aviso.style.display = "block";
+
+setTimeout(() => {
+aviso.style.display = "none";
+}, 3000);
+}
+
+function enviarComandoRelogio(tipo, jogador = "") {
+if (!salaId) return;
+
+let comando = {
+id: Date.now().toString() + Math.floor(Math.random() * 9999).toString(),
+tipo: tipo,
+jogador: jogador,
+origem: "relogio",
+timestamp: firebase.database.ServerValue.TIMESTAMP
+};
+
+database.ref('salas/' + salaId + '/comandoRelogio').set(comando);
+}
+
+function escutarComandosRelogio() {
+if (!salaId || ehRelogio) return;
+
+database.ref('salas/' + salaId + '/comandoRelogio').on('value', (snapshot) => {
+const comando = snapshot.val();
+if (!comando || !comando.id) return;
+if (comando.id === ultimoComandoRelogio) return;
+
+ultimoComandoRelogio = comando.id;
+
+if (comando.tipo === "ponto" && comando.jogador) {
+pontuar(comando.jogador);
+}
+
+if (comando.tipo === "desfazer") {
+desfazer();
+}
+});
+}
+
+function enviarDadosFirebase(textoLocucao = "") {
+salvarPartidaLocal();
+
+if (!salaId) return;
+
+database.ref('salas/' + salaId).update({
+configs: configs,
+jogo: jogo,
+textoLocucao: textoLocucao
+});
+}
+
+function desligarEscutador() {
+if (salaId) {
+database.ref('salas/' + salaId).off();
+}
+}
+
+function escutarFirebase() {
+if (!salaId) return;
+
+database.ref('salas/' + salaId).on('value', (snapshot) => {
+const dados = snapshot.val();
+
+if (dados && dados.jogo) {
+configs = dados.configs || configs;
+jogo = dados.jogo;
+atualizarTelaVisual();
+if (document.getElementById("tela-placar").style.display === "flex") iniciarCronometroVisual();
+
+if (dados.textoLocucao && dados.textoLocucao !== ultimoPlacarFalado) {
+ultimoPlacarFalado = dados.textoLocucao;
+if (ultimoPlacarFalado.includes("Troca de lado")) mostrarAvisoTrocaLado();
+if (ultimoPlacarFalado.includes("MATCH POINT")) mostrarAvisoGrande("MATCH POINT");
+if (ultimoPlacarFalado.includes("SET POINT")) mostrarAvisoGrande("SET POINT");
+falarPlacar(ultimoPlacarFalado);
+}
+}
+});
+}
+
+function atualizarTextosDinamicos() {
+let gMax = parseInt(document.getElementById("cfg-games").value) || 6;
+let deuceTb = gMax - 1;
+
+document.getElementById("opt-com-limite").innerText = `${gMax} ganha direto (Tie-break em ${deuceTb}x${deuceTb})`;
+document.getElementById("opt-vencer-dois").innerText = `Vencer por dois (Tie-break em ${gMax}x${gMax})`;
+}
+
+function atualizarVisibilidadeTieBreak() {
+const usarTb = document.getElementById("cfg-tiebreak").value === "sim";
+document.getElementById("grupo-opcoes-tiebreak").style.display = usarTb ? "block" : "none";
+}
+
+function alternarVisibilidadeLimiteTb() {
+const tipo = document.getElementById("cfg-tipo-tb").value;
+document.getElementById("campo-limite-tb").style.display = tipo === "com_limite" ? "flex" : "none";
+}
+
+function iniciarJogo() {
+salaId = Math.floor(1000 + Math.random() * 9000).toString();
+ehRelogio = false;
+
+configs.nomeA = document.getElementById("cfg-nomeA").value.trim() || "Jogador A";
+configs.nomeB = document.getElementById("cfg-nomeB").value.trim() || "Jogador B";
+configs.modalidade = document.getElementById("cfg-modalidade").value;
+configs.modoAudio = document.getElementById("cfg-audio").value;
+configs.sacadorInicial = document.getElementById("cfg-sacador-inicial").value;
+configs.trocaSaque = document.getElementById("cfg-troca-saque").value;
+configs.trocaLado = document.getElementById("cfg-troca-lado").value;
+configs.mostrarCronometro = document.getElementById("cfg-cronometro").value === "sim";
+configs.avisosPontos = document.getElementById("cfg-avisos-pontos").value === "sim";
+configs.limiteVantagens = document.getElementById("cfg-vantagens").value;
+configs.usarTieBreak = document.getElementById("cfg-tiebreak").value === "sim";
+configs.regraTb = document.getElementById("cfg-regra-tb").value;
+configs.tipoTb = document.getElementById("cfg-tipo-tb").value;
+configs.limitePontosTb = parseInt(document.getElementById("cfg-limite-pontos-tb").value) || 7;
+configs.setsParaVencer = parseInt(document.getElementById("cfg-sets").value) || 2;
+configs.gamesParaVencerSet = parseInt(document.getElementById("cfg-games").value) || 6;
+
+jogo = {
+pontosA: 0,
+pontosB: 0,
+gamesA: 0,
+gamesB: 0,
+setsA: 0,
+setsB: 0,
+contadorDeuces: 0,
+emTieBreak: false,
+pontosTbA: 0,
+pontosTbB: 0,
+sacadorAtual: configs.sacadorInicial,
+ultimoAvisoTrocaLado: "",
+mostrarTrocaLado: false,
+inicioPartida: null,
+tempoFinalPartida: null,
+historicoSets: [],
+partidaEncerrada: false,
+historico: []
+};
+
+document.getElementById("tela-config").style.display = "none";
+document.getElementById("tela-placar").style.display = "flex";
+
+atualizarTelaVisual();
+iniciarCronometroVisual();
+setTimeout(iniciarCronometroVisual, 300);
+enviarDadosFirebase(`Jogo iniciado. | Sacando: ${nomeDoJogador(jogo.sacadorAtual)}.`);
+setTimeout(() => {
+escutarFirebase();
+escutarComandosRelogio();
+}, 300);
+}
+
+
+function conectarRelogioDireto(codigoSala) {
+if (!codigoSala) return;
+
+salaId = codigoSala.toString().trim();
+ehRelogio = true;
+
+database.ref('salas/' + salaId).once('value', (snapshot) => {
+if (snapshot.exists()) {
+mostrarTelaRelogioLeve();
+escutarFirebase();
+} else {
+alert("Sala não encontrada!");
+}
+});
+}
+
+function verificarEntradaPorLink() {
+try {
+const params = new URLSearchParams(window.location.search);
+const codigo = params.get("sala");
+
+if (codigo) {
+setTimeout(() => {
+conectarRelogioDireto(codigo);
+}, 500);
+}
+} catch(e) {}
+}
+
+function conectarComoRelogio() {
+let codigoDigitado = document.getElementById("cfg-codigo-sala").value.trim();
+
+if (!codigoDigitado) {
+alert("Digite o código gerado no celular!");
+return;
+}
+
+salaId = codigoDigitado;
+ehRelogio = true;
+
+database.ref('salas/' + salaId).once('value', (snapshot) => {
+if (snapshot.exists()) {
+mostrarTelaRelogioLeve();
+escutarFirebase();
+} else {
+alert("Sala não encontrada!");
+}
+});
+}
+
+function voltarAoMenu() {
+if (confirm("Deseja voltar ao menu? Isso limpará a sala atual.")) {
+if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+pararCronometroVisual();
+desligarEscutador();
+
+if (salaId && !ehRelogio) {
+database.ref('salas/' + salaId).remove();
+}
+
+localStorage.removeItem("placarPro_partidaAtual");
+
+location.href = location.pathname;
+}
+}
+
+function salvarHistorico() {
+let estado = {
+pontosA: jogo.pontosA,
+pontosB: jogo.pontosB,
+gamesA: jogo.gamesA,
+gamesB: jogo.gamesB,
+setsA: jogo.setsA,
+setsB: jogo.setsB,
+contadorDeuces: jogo.contadorDeuces,
+emTieBreak: jogo.emTieBreak,
+pontosTbA: jogo.pontosTbA,
+pontosTbB: jogo.pontosTbB,
+sacadorAtual: jogo.sacadorAtual,
+ultimoAvisoTrocaLado: jogo.ultimoAvisoTrocaLado,
+mostrarTrocaLado: jogo.mostrarTrocaLado,
+inicioPartida: jogo.inicioPartida,
+tempoFinalPartida: jogo.tempoFinalPartida,
+historicoSets: JSON.parse(JSON.stringify(jogo.historicoSets || [])),
+partidaEncerrada: jogo.partidaEncerrada
+};
+
+if (!jogo.historico) jogo.historico = [];
+jogo.historico.push(JSON.stringify(estado));
+}
+
+function pontuar(jogador) {
+if (ehRelogio) {
+enviarComandoRelogio("ponto", jogador);
+return;
+}
+
+if (jogo.partidaEncerrada) return;
+
+salvarHistorico();
+
+if (jogo.emTieBreak) {
+if (jogador === 'A') jogo.pontosTbA++;
+else jogo.pontosTbB++;
+
+let tA = jogo.pontosTbA;
+let tB = jogo.pontosTbB;
+
+let pontosMinimos = 7;
+
+if (configs.tipoTb === "com_limite") {
+if (tA >= configs.limitePontosTb && (tA - tB) >= 1) {
+colocarSet('A');
+finalizarPonto('A');
+return;
+}
+
+if (tB >= configs.limitePontosTb && (tB - tA) >= 1) {
+colocarSet('B');
+finalizarPonto('B');
+return;
+}
+
+} else {
+if (tA >= pontosMinimos && (tA - tB) >= 2) {
+colocarSet('A');
+finalizarPonto('A');
+return;
+}
+
+if (tB >= pontosMinimos && (tB - tA) >= 2) {
+colocarSet('B');
+finalizarPonto('B');
+return;
+}
+}
+
+} else {
+processarPontuacaoNormal(jogador, playerInvertido(jogador));
+}
+
+finalizarPonto(jogador);
+}
+
+function playerInvertido(jog) {
+return jog === 'A' ? 'B' : 'A';
+}
+
+
+function mostrarAvisoGrande(texto) {
+let aviso = document.getElementById("aviso-troca-lado");
+if (!aviso) return;
+
+aviso.innerText = texto;
+aviso.style.display = "block";
+
+setTimeout(() => {
+aviso.style.display = "none";
+aviso.innerText = "TROCA DE LADO";
+}, 3000);
+}
+
+function jogadorGanhariaGame(jogador) {
+if (jogo.partidaEncerrada) return false;
+if (jogo.emTieBreak) return false;
+
+let ganhador = jogador;
+let perdedor = jogador === "A" ? "B" : "A";
+let pGanhador = jogo["pontos" + ganhador];
+let pPerdedor = jogo["pontos" + perdedor];
+
+if (configs.limiteVantagens === "0" && pGanhador === 3 && pPerdedor === 3) return true;
+if (pGanhador === 4) return true;
+if (pGanhador === 3 && pPerdedor < 3) return true;
+if (configs.limiteVantagens === "1" && pGanhador === 3 && pPerdedor === 3 && jogo.contadorDeuces >= 1) return true;
+
+return false;
+}
+
+function jogadorGanhariaSetComGame(jogador) {
+let gA = jogo.gamesA;
+let gB = jogo.gamesB;
+
+if (jogador === "A") gA++;
+else gB++;
+
+if (configs.modalidade === "proset8") {
+if (jogador === "A") {
+return (gA === 8 && gB <= 6) || (gA === 9 && gB === 7);
+} else {
+return (gB === 8 && gA <= 6) || (gB === 9 && gA === 7);
+}
+}
+
+let gMax = configs.gamesParaVencerSet;
+
+if (configs.usarTieBreak) {
+if (configs.regraTb === "com_limite") {
+if (jogador === "A" && gA >= gMax) return true;
+if (jogador === "B" && gB >= gMax) return true;
+} else {
+if (jogador === "A" && gA >= gMax && (gA - gB) >= 2) return true;
+if (jogador === "B" && gB >= gMax && (gB - gA) >= 2) return true;
+}
+} else {
+if (jogador === "A" && gA >= gMax && (gA - gB) >= 2) return true;
+if (jogador === "B" && gB >= gMax && (gB - gA) >= 2) return true;
+}
+
+return false;
+}
+
+function jogadorGanhariaSetNoTieBreak(jogador) {
+if (!jogo.emTieBreak) return false;
+
+let tA = jogo.pontosTbA;
+let tB = jogo.pontosTbB;
+
+if (jogador === "A") tA++;
+else tB++;
+
+if (configs.tipoTb === "com_limite") {
+if (jogador === "A" && tA >= configs.limitePontosTb && (tA - tB) >= 1) return true;
+if (jogador === "B" && tB >= configs.limitePontosTb && (tB - tA) >= 1) return true;
+} else {
+if (jogador === "A" && tA >= 7 && (tA - tB) >= 2) return true;
+if (jogador === "B" && tB >= 7 && (tB - tA) >= 2) return true;
+}
+
+return false;
+}
+
+function jogadorTeriaMatchPoint(jogador) {
+let setsAtuais = jogador === "A" ? jogo.setsA : jogo.setsB;
+return (setsAtuais + 1) >= configs.setsParaVencer;
+}
+
+function obterAvisoPontoImportante() {
+if (!configs.avisosPontos || jogo.partidaEncerrada) return "";
+
+let candidatos = ["A", "B"];
+
+for (let i = 0; i < candidatos.length; i++) {
+let jogador = candidatos[i];
+let ganhaSet = false;
+
+if (jogo.emTieBreak) {
+ganhaSet = jogadorGanhariaSetNoTieBreak(jogador);
+} else {
+if (jogadorGanhariaGame(jogador)) {
+ganhaSet = jogadorGanhariaSetComGame(jogador);
+}
+}
+
+if (ganhaSet) {
+let nome = nomeDoJogador(jogador);
+if (jogadorTeriaMatchPoint(jogador)) return "MATCH POINT " + nome;
+return "SET POINT " + nome;
+}
+}
+
+return "";
+}
+
+function finalizarPonto(jogador) {
+atualizarTelaVisual();
+let textoFalar = gerarTextoLocucao(jogador);
+
+if (jogo.mostrarTrocaLado) {
+mostrarAvisoTrocaLado();
+textoFalar += " | Troca de lado.";
+jogo.mostrarTrocaLado = false;
+}
+
+let avisoPonto = obterAvisoPontoImportante();
+if (avisoPonto) {
+mostrarAvisoGrande(avisoPonto);
+textoFalar += " | " + avisoPonto + ".";
+}
+
+enviarDadosFirebase(textoFalar);
+}
+
+function processarPontuacaoNormal(ganhador, perdedor) {
+let pGanhador = `pontos${ganhador}`;
+let pPerdedor = `pontos${perdedor}`;
+
+if (configs.limiteVantagens === "0" && jogo[pGanhador] === 3 && jogo[pPerdedor] === 3) {
+colocarGame(ganhador);
+return;
+}
+
+if (jogo[pGanhador] === 4) {
+colocarGame(ganhador);
+return;
+}
+
+if (jogo[pPerdedor] === 4) {
+jogo[pPerdedor] = 3;
+return;
+}
+
+if (jogo[pGanhador] === 3 && jogo[pPerdedor] === 3) {
+jogo.contadorDeuces++;
+
+if (configs.limiteVantagens === "1" && jogo.contadorDeuces > 1) {
+colocarGame(ganhador);
+} else {
+jogo[pGanhador] = 4;
+}
+
+return;
+}
+
+if (jogo[pGanhador] === 3 && jogo[pPerdedor] < 3) {
+colocarGame(ganhador);
+return;
+}
+
+jogo[pGanhador]++;
+}
+
+function totalGamesDoJogo() {
+let total = jogo.gamesA + jogo.gamesB;
+
+if (jogo.historicoSets) {
+jogo.historicoSets.forEach(set => {
+total += Number(set.a || 0) + Number(set.b || 0);
+});
+}
+
+return total;
+}
+
+function calcularSacadorAtual() {
+if (configs.trocaSaque === "manual") return jogo.sacadorAtual;
+
+let intervalo = parseInt(configs.trocaSaque) || 1;
+let totalGames = totalGamesDoJogo();
+
+let bloco = Math.floor(totalGames / intervalo);
+let trocar = bloco % 2 === 1;
+
+if (!trocar) return configs.sacadorInicial;
+return configs.sacadorInicial === "A" ? "B" : "A";
+}
+
+function atualizarSacadorAutomatico() {
+if (configs.trocaSaque !== "manual") {
+jogo.sacadorAtual = calcularSacadorAtual();
+}
+}
+
+function trocarSacadorManual() {
+salvarHistorico();
+jogo.sacadorAtual = jogo.sacadorAtual === "A" ? "B" : "A";
+atualizarTelaVisual();
+enviarDadosFirebase(`Sacador alterado. | Sacando: ${nomeDoJogador(jogo.sacadorAtual)}.`);
+}
+
+
+function mostrarAvisoTrocaLado() {
+mostrarAvisoGrande("TROCA DE LADO");
+}
+
+function deveTrocarLadoPorGame() {
+if (configs.trocaLado !== "impares" && configs.trocaLado !== "ambos") return false;
+
+let totalAtual = jogo.gamesA + jogo.gamesB;
+let chave = "game-" + totalAtual + "-set-" + (jogo.historicoSets ? jogo.historicoSets.length : 0);
+
+if (totalAtual > 0 && totalAtual % 2 === 1 && jogo.ultimoAvisoTrocaLado !== chave) {
+jogo.ultimoAvisoTrocaLado = chave;
+jogo.mostrarTrocaLado = true;
+return true;
+}
+
+return false;
+}
+
+function deveTrocarLadoPorSet() {
+if (configs.trocaLado !== "set" && configs.trocaLado !== "ambos") return false;
+
+let totalSets = jogo.historicoSets ? jogo.historicoSets.length : 0;
+let chave = "set-" + totalSets;
+
+if (totalSets > 0 && jogo.ultimoAvisoTrocaLado !== chave) {
+jogo.ultimoAvisoTrocaLado = chave;
+jogo.mostrarTrocaLado = true;
+return true;
+}
+
+return false;
+}
+
+function avisarTrocaDeLado() {
+mostrarAvisoTrocaLado();
+return " Troca de lado.";
+}
+
+function colocarGame(jogador) {
+let gMax = configs.gamesParaVencerSet;
+
+if (jogador === 'A') jogo.gamesA++;
+else jogo.gamesB++;
+
+jogo.pontosA = 0;
+jogo.pontosB = 0;
+jogo.contadorDeuces = 0;
+
+atualizarSacadorAutomatico();
+
+let avisoTrocaPorGame = deveTrocarLadoPorGame();
+
+let gA = jogo.gamesA;
+let gB = jogo.gamesB;
+
+if (configs.modalidade === "proset8") {
+if (gA === 8 && gB === 8) {
+jogo.emTieBreak = true;
+jogo.pontosTbA = 0;
+jogo.pontosTbB = 0;
+return;
+}
+
+if (gA === 8 && gB <= 6) {
+colocarSet('A');
+return;
+}
+
+if (gB === 8 && gA <= 6) {
+colocarSet('B');
+return;
+}
+
+if (gA === 9 && gB === 7) {
+colocarSet('A');
+return;
+}
+
+if (gB === 9 && gA === 7) {
+colocarSet('B');
+return;
+}
+
+return;
+}
+
+if (configs.usarTieBreak) {
+if (configs.regraTb === "com_limite") {
+let deuceTb = gMax - 1;
+
+if (gA === deuceTb && gB === deuceTb) {
+jogo.emTieBreak = true;
+jogo.pontosTbA = 0;
+jogo.pontosTbB = 0;
+return;
+}
+
+} else {
+if (gA === gMax && gB === gMax) {
+jogo.emTieBreak = true;
+jogo.pontosTbA = 0;
+jogo.pontosTbB = 0;
+return;
+}
+}
+}
+
+if (configs.regraTb === "com_limite") {
+if (gA >= gMax || gB >= gMax) {
+if (gA >= gMax) colocarSet('A');
+else if (gB >= gMax) colocarSet('B');
+}
+} else {
+if (gA >= gMax || gB >= gMax) {
+if (gA >= gMax && (gA - gB) >= 2) colocarSet('A');
+else if (gB >= gMax && (gB - gA) >= 2) colocarSet('B');
+}
+}
+}
+
+function colocarSet(jogador) {
+jogo.historicoSets = jogo.historicoSets || [];
+
+jogo.historicoSets.push({
+a: Math.round(jogo.gamesA),
+b: Math.round(jogo.gamesB),
+vencedor: jogador
+});
+
+if (jogador === 'A') jogo.setsA++;
+else jogo.setsB++;
+
+let avisoTrocaPorSet = deveTrocarLadoPorSet();
+
+jogo.gamesA = 0;
+jogo.gamesB = 0;
+jogo.emTieBreak = false;
+jogo.pontosTbA = 0;
+jogo.pontosTbB = 0;
+
+atualizarSacadorAutomatico();
+
+if (jogo.setsA === configs.setsParaVencer || jogo.setsB === configs.setsParaVencer) {
+jogo.partidaEncerrada = true;
+if (!jogo.tempoFinalPartida) jogo.tempoFinalPartida = new Date().getTime();
+pararCronometroVisual();
+}
+}
+
+function desfazer() {
+if (ehRelogio) {
+enviarComandoRelogio("desfazer");
+return;
+}
+
+if (jogo.historico && jogo.historico.length > 0) {
+let e = JSON.parse(jogo.historico.pop());
+Object.assign(jogo, e);
+atualizarTelaVisual();
+enviarDadosFirebase("Ponto desfeito.");
+}
+}
+
+function obterPlacarTexto() {
+if (jogo.emTieBreak) return { a: jogo.pontosTbA, b: jogo.pontosTbB };
+if (jogo.pontosA === 4) return { a: "Adv", b: "40" };
+if (jogo.pontosB === 4) return { a: "40", b: "Adv" };
+if (jogo.pontosA === 3 && jogo.pontosB === 3) return { a: "40", b: "40" };
+
+return {
+a: nomesPontos[jogo.pontosA] || "0",
+b: nomesPontos[jogo.pontosB] || "0"
+};
+}
+
+function atualizarTelaVisual() {
+let p = obterPlacarTexto();
+
+document.getElementById("info-sala").innerText = `SALA: ${salaId || '----'}`;
+
+let linkRelogio = document.getElementById("link-relogio");
+if (linkRelogio && salaId) {
+linkRelogio.innerText = window.location.origin + window.location.pathname + "?sala=" + salaId;
+}
+
+let bolaA = jogo.sacadorAtual === "A" ? "🎾 " : "";
+let bolaB = jogo.sacadorAtual === "B" ? "🎾 " : "";
+
+document.getElementById("label-nomeA").innerText = bolaA + configs.nomeA;
+document.getElementById("label-nomeB").innerText = bolaB + configs.nomeB;
+
+document.getElementById("pontosA").innerText = p.a;
+document.getElementById("pontosB").innerText = p.b;
+document.getElementById("ptA").innerText = p.a;
+document.getElementById("ptB").innerText = p.b;
+document.getElementById("gamesA").innerText = jogo.gamesA;
+document.getElementById("gamesB").innerText = jogo.gamesB;
+document.getElementById("rotuloPontos").innerText = jogo.emTieBreak ? "TIE-BRK" : "PONTOS";
+
+let htmlSetsA = "";
+let htmlSetsB = "";
+
+if (jogo.historicoSets) {
+jogo.historicoSets.forEach(set => {
+let classeA = set.vencedor === 'A' ? 'class="set-ganho"' : '';
+let classeB = set.vencedor === 'B' ? 'class="set-ganho"' : '';
+
+htmlSetsA += `<span ${classeA}>&nbsp;${set.a}&nbsp;</span>`;
+htmlSetsB += `<span ${classeB}>&nbsp;${set.b}&nbsp;</span>`;
+});
+}
+
+document.getElementById("setsPassadosA").innerHTML = htmlSetsA;
+document.getElementById("setsPassadosB").innerHTML = htmlSetsB;
+atualizarTelaRelogioLeve();
+atualizarCronometro();
+}
+
+window.onload = function() {
+aplicarPreset();
+atualizarTextosDinamicos();
+mostrarBotaoContinuarSeExistir();
+verificarEntradaPorLink();
+
+setInterval(function() {
+try {
+atualizarCronometro();
+} catch(e) {}
+}, 1000);
+};
+</script>
+
+</body>
+</html>
