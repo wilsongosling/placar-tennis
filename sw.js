@@ -1,4 +1,5 @@
-const CACHE_NAME = "placarpro-v1";
+const CACHE_NAME = "gamescore-v2";
+
 const FILES_TO_CACHE = [
   "./",
   "./index.html",
@@ -8,12 +9,13 @@ const FILES_TO_CACHE = [
 ];
 
 self.addEventListener("install", function(event) {
+  self.skipWaiting();
+
   event.waitUntil(
     caches.open(CACHE_NAME).then(function(cache) {
       return cache.addAll(FILES_TO_CACHE);
     })
   );
-  self.skipWaiting();
 });
 
 self.addEventListener("activate", function(event) {
@@ -21,18 +23,33 @@ self.addEventListener("activate", function(event) {
     caches.keys().then(function(keys) {
       return Promise.all(
         keys.map(function(key) {
-          if (key !== CACHE_NAME) return caches.delete(key);
+          if (key !== CACHE_NAME) {
+            return caches.delete(key);
+          }
         })
       );
+    }).then(function() {
+      return self.clients.claim();
     })
   );
-  self.clients.claim();
 });
 
 self.addEventListener("fetch", function(event) {
+  if (event.request.method !== "GET") return;
+
   event.respondWith(
-    caches.match(event.request).then(function(response) {
-      return response || fetch(event.request);
-    })
+    fetch(event.request)
+      .then(function(response) {
+        const responseClone = response.clone();
+
+        caches.open(CACHE_NAME).then(function(cache) {
+          cache.put(event.request, responseClone);
+        });
+
+        return response;
+      })
+      .catch(function() {
+        return caches.match(event.request);
+      })
   );
 });
