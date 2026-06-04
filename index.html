@@ -1074,6 +1074,10 @@ aviso.style.display = "none";
 function enviarComandoRelogio(tipo, jogador = "") {
 if (!salaId) return;
 
+if (tipo === "ponto") {
+mostrarAvisoRelogio("ENVIADO");
+}
+
 let comando = {
 id: Date.now().toString() + Math.floor(Math.random() * 9999).toString(),
 tipo: tipo,
@@ -1213,7 +1217,10 @@ atualizarTelaVisual();
 iniciarCronometroVisual();
 setTimeout(iniciarCronometroVisual, 300);
 enviarDadosFirebase(`Jogo iniciado. | Sacando: ${nomeDoJogador(jogo.sacadorAtual)}.`);
-setTimeout(escutarFirebase, 300);
+setTimeout(() => {
+escutarFirebase();
+escutarComandosRelogio();
+}, 300);
 }
 
 function conectarComoRelogio() {
