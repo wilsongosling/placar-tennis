@@ -68,7 +68,6 @@ background: #000;
 color: #fff;
 padding: 0;
 margin: 0;
-flex-direction: column;
 overflow: hidden;
 position: fixed;
 top: 0;
@@ -76,55 +75,81 @@ left: 0;
 font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
 }
 
-.relogio-topo {
-height: 39vh;
-width: 100vw;
-position: relative;
-border-bottom: 1px solid #666;
+.relogio-coluna-esquerda {
+position: absolute;
+top: 0;
+left: 0;
+height: 100vh;
+width: 40vw;
+background: linear-gradient(180deg, rgba(0,45,95,0.95), rgba(0,20,45,0.98));
+border: none;
+border-right: 1px solid rgba(255,255,255,0.25);
+color: #fff;
+padding: 0;
+margin: 0;
+cursor: pointer;
 overflow: hidden;
 }
 
-.relogio-meio {
-height: 18vh;
-width: 100vw;
-display: flex;
-align-items: center;
-justify-content: center;
-border-bottom: 1px solid #666;
+.relogio-coluna-direita {
+position: absolute;
+top: 0;
+right: 0;
+height: 100vh;
+width: 40vw;
+background: linear-gradient(180deg, rgba(0,80,25,0.95), rgba(0,35,10,0.98));
+border: none;
+border-left: 1px solid rgba(255,255,255,0.25);
+color: #fff;
+padding: 0;
+margin: 0;
+cursor: pointer;
 overflow: hidden;
 }
 
-.relogio-baixo {
-height: 43vh;
-width: 100vw;
-position: relative;
+.relogio-centro {
+position: absolute;
+top: 0;
+left: 40vw;
+height: 100vh;
+width: 20vw;
+background: #000;
+color: #fff;
 overflow: hidden;
+text-align: center;
 }
 
 .relogio-nome-a {
 position: absolute;
-top: 1.5vh;
-left: 2vw;
-font-size: 6vh;
-line-height: 1;
-color: #fff;
-white-space: nowrap;
-max-width: 44vw;
-overflow: hidden;
-text-overflow: ellipsis;
-z-index: 3;
-}
-
-.relogio-tempo {
-position: absolute;
-top: 1.5vh;
+top: 9vh;
 left: 50%;
 transform: translateX(-50%);
-font-size: 5vh;
+font-size: 7vh;
 line-height: 1;
-color: #fff;
+font-weight: 600;
 white-space: nowrap;
-z-index: 3;
+max-width: 36vw;
+overflow: hidden;
+text-overflow: ellipsis;
+}
+
+.relogio-nome-b {
+position: absolute;
+top: 9vh;
+left: 50%;
+transform: translateX(-50%);
+font-size: 7vh;
+line-height: 1;
+font-weight: 600;
+white-space: nowrap;
+max-width: 36vw;
+overflow: hidden;
+text-overflow: ellipsis;
+}
+
+.relogio-bolinha {
+font-size: 5vh;
+margin-left: 1vw;
 }
 
 .relogio-ponto-a {
@@ -136,88 +161,94 @@ font-size: 28vh;
 font-weight: 300;
 line-height: 0.9;
 color: #fff;
-background: transparent;
-border: none;
-width: 100vw;
-height: 39vh;
-cursor: pointer;
-padding: 0;
-margin: 0;
-z-index: 2;
-}
-
-.relogio-nome-b {
-position: absolute;
-top: 1.5vh;
-left: 2vw;
-font-size: 6vh;
-line-height: 1;
-color: #fff;
-white-space: nowrap;
-max-width: 55vw;
-overflow: hidden;
-text-overflow: ellipsis;
-z-index: 3;
 }
 
 .relogio-ponto-b {
 position: absolute;
 left: 50%;
-top: 51%;
+top: 57%;
 transform: translate(-50%, -50%);
 font-size: 28vh;
 font-weight: 300;
 line-height: 0.9;
 color: #fff;
-background: transparent;
-border: none;
-width: 100vw;
-height: 39vh;
-cursor: pointer;
-padding: 0;
-margin: 0;
-z-index: 2;
+}
+
+.relogio-tempo {
+position: absolute;
+top: 12vh;
+left: 50%;
+transform: translateX(-50%);
+font-size: 4.8vh;
+line-height: 1;
+white-space: nowrap;
+color: #fff;
+}
+
+.relogio-linha-verde {
+position: absolute;
+top: 24vh;
+left: 18%;
+width: 64%;
+height: 0.8vh;
+background: #00FF66;
+border-radius: 10px;
+}
+
+.relogio-sets-centro {
+position: absolute;
+top: 34vh;
+left: 0;
+width: 100%;
+font-size: 7vh;
+line-height: 1.15;
+color: #fff;
+text-align: center;
+}
+
+.relogio-linha-set {
+display: flex;
+justify-content: center;
+gap: 5vw;
+height: 9vh;
+align-items: center;
+}
+
+.relogio-separador-centro {
+position: absolute;
+top: 50vh;
+left: 20%;
+width: 60%;
+height: 1px;
+background: rgba(255,255,255,0.25);
+}
+
+.relogio-set-ganho {
+font-weight: 900;
+text-decoration: underline;
 }
 
 .relogio-corrigir {
 position: absolute;
 left: 50%;
-bottom: 1vh;
+bottom: 6vh;
 transform: translateX(-50%);
-font-size: 4.4vh;
-line-height: 1;
+font-size: 4.2vh;
+line-height: 1.1;
 color: #ddd;
 background: transparent;
 border: none;
-height: 6vh;
-width: 96vw;
+width: 100%;
 cursor: pointer;
 padding: 0;
 margin: 0;
 z-index: 4;
 }
 
-.relogio-sets-centro {
-font-size: 6vh;
-line-height: 1;
-color: #fff;
-text-align: center;
-min-width: 34vw;
-max-height: 17vh;
-overflow: hidden;
-}
-
-.relogio-linha-set {
-display: flex;
-justify-content: center;
-gap: 10vw;
-height: 6.2vh;
-align-items: center;
-}
-
-.relogio-set-ganho {
-font-weight: 900;
-text-decoration: underline;
+.relogio-icone-corrigir {
+display: block;
+font-size: 5vh;
+margin-bottom: 1vh;
 }
 
 #relogio-aviso {
@@ -237,28 +268,45 @@ z-index: 999;
 white-space: nowrap;
 }
 
-/* Telas extremamente pequenas */
+/* Apple Watch menor */
 @media (max-height: 190px) {
+.relogio-nome-a,
+.relogio-nome-b {
+font-size: 5.5vh;
+top: 8vh;
+}
+
 .relogio-ponto-a,
 .relogio-ponto-b {
 font-size: 25vh;
 }
 
-.relogio-nome-a,
-.relogio-nome-b {
-font-size: 5vh;
+.relogio-tempo {
+font-size: 4vh;
+top: 11vh;
 }
 
-.relogio-tempo {
-font-size: 4.3vh;
+.relogio-linha-verde {
+top: 23vh;
 }
 
 .relogio-sets-centro {
-font-size: 5.2vh;
+font-size: 5.8vh;
+top: 33vh;
+}
+
+.relogio-linha-set {
+height: 8vh;
+gap: 4vw;
 }
 
 .relogio-corrigir {
-font-size: 3.8vh;
+font-size: 3.5vh;
+bottom: 5vh;
+}
+
+.relogio-icone-corrigir {
+font-size: 4vh;
 }
 }
 
@@ -503,24 +551,32 @@ Tênis tradicional: 6 games, melhor de 3 sets, com vantagem e tie-break em 6x6.
 <div id="modo-relogio-leve">
 <div id="relogio-aviso">TROCA DE LADO</div>
 
-<div class="relogio-topo">
+<button class="relogio-coluna-esquerda" onclick="pontuar('A')">
 <div id="relogio-nomeA" class="relogio-nome-a">João 🎾</div>
-<div id="relogio-tempo" class="relogio-tempo">0:00:00</div>
-<button id="relogio-pontoA" class="relogio-ponto-a" onclick="pontuar('A')">40</button>
-</div>
+<div id="relogio-pontoA" class="relogio-ponto-a">40</div>
+</button>
 
-<div class="relogio-meio">
+<div class="relogio-centro">
+<div id="relogio-tempo" class="relogio-tempo">0:00:00</div>
+<div class="relogio-linha-verde"></div>
+
 <div id="relogio-sets-centro" class="relogio-sets-centro">
 <div class="relogio-linha-set"><span>4</span><span>2</span></div>
 <div class="relogio-linha-set"><span class="relogio-set-ganho">6</span><span>1</span></div>
 </div>
+
+<div class="relogio-separador-centro"></div>
+
+<button class="relogio-corrigir" onclick="desfazer()">
+<span class="relogio-icone-corrigir">✎</span>
+Corrigir
+</button>
 </div>
 
-<div class="relogio-baixo">
+<button class="relogio-coluna-direita" onclick="pontuar('B')">
 <div id="relogio-nomeB" class="relogio-nome-b">Pedro</div>
-<button id="relogio-pontoB" class="relogio-ponto-b" onclick="pontuar('B')">15</button>
-<button class="relogio-corrigir" onclick="desfazer()">Corrigir último ponto</button>
-</div>
+<div id="relogio-pontoB" class="relogio-ponto-b">15</div>
+</button>
 </div>
 
 <script>
