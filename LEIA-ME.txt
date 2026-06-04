@@ -1,0 +1,22 @@
+Como usar:
+
+1. Extraia este arquivo ZIP.
+2. Copie a pasta icons para dentro da sua pasta PLACARPRO.
+3. Substitua a pasta icons antiga.
+4. Copie também o manifest.json para a pasta PLACARPRO, substituindo o antigo.
+5. Abra pelo Live Server e teste.
+
+Estrutura final:
+
+PLACARPRO
+├── index.html
+├── manifest.json
+├── sw.js
+└── icons
+    ├── icon-512.png
+    ├── icon-192.png
+    ├── icon-144.png
+    ├── icon-96.png
+    ├── icon-72.png
+    ├── icon-48.png
+    └── icon-32.png

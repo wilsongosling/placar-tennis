@@ -3,14 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>GameScore</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#000000">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="PlacarPro">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
-
+<title>Placar de Tênis Pro Sync</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
@@ -64,6 +57,107 @@ letter-spacing: 1px;
 .btn-acao-painel { background: #222; border: none; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 4px; padding: 8px; }
 .btn-desfazer { color: #ff4444; font-size: 11px; }
 .btn-menu { color: #aaa; font-size: 11px; display: flex; }
+
+.btn-relogio { display: none; }
+
+#modo-relogio-leve {
+display: none;
+height: 100vh;
+width: 100vw;
+background: #000;
+color: #fff;
+padding: 8px;
+flex-direction: column;
+gap: 6px;
+overflow: hidden;
+}
+
+#relogio-status {
+font-size: 10px;
+color: #00E0FF;
+text-align: center;
+font-weight: bold;
+}
+
+#relogio-sacador {
+font-size: 13px;
+color: #00FF66;
+text-align: center;
+font-weight: bold;
+white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis;
+}
+
+#relogio-aviso {
+display: none;
+background: #00FF66;
+color: #000;
+font-size: 14px;
+font-weight: 900;
+text-align: center;
+padding: 6px;
+border-radius: 8px;
+}
+
+#relogio-placar {
+background: #111;
+border: 1px solid #222;
+border-radius: 10px;
+padding: 7px;
+text-align: center;
+}
+
+.relogio-pontos {
+font-size: 22px;
+font-weight: 900;
+color: #fff;
+line-height: 1.1;
+}
+
+.relogio-games {
+font-size: 13px;
+font-weight: bold;
+color: #FFA500;
+margin-top: 2px;
+}
+
+.relogio-sets {
+font-size: 11px;
+color: #aaa;
+margin-top: 2px;
+}
+
+.relogio-btn {
+flex: 1;
+border: none;
+border-radius: 12px;
+font-size: 18px;
+font-weight: 900;
+cursor: pointer;
+color: #000;
+min-height: 58px;
+}
+
+.relogio-btn-a { background: #00FF66; }
+.relogio-btn-b { background: #00E0FF; }
+
+.relogio-acoes {
+display: flex;
+gap: 6px;
+height: 38px;
+}
+
+.relogio-acao {
+flex: 1;
+background: #222;
+color: #fff;
+border: 1px solid #333;
+border-radius: 8px;
+font-size: 11px;
+font-weight: bold;
+}
+
 
 #aviso-troca-lado {
 display: none;
@@ -321,6 +415,31 @@ Tênis tradicional: 6 games, melhor de 3 sets, com vantagem e tie-break em 6x6.
 </button>
 </div>
 
+<div id="modo-relogio-leve">
+<div id="relogio-status">MODO RELÓGIO • SALA ----</div>
+<div id="relogio-sacador">🎾 Sacador</div>
+<div id="relogio-aviso">TROCA DE LADO</div>
+
+<div id="relogio-placar">
+<div class="relogio-pontos"><span id="rel-ptA">0</span> : <span id="rel-ptB">0</span></div>
+<div class="relogio-games">Games <span id="rel-gamesA">0</span> : <span id="rel-gamesB">0</span></div>
+<div class="relogio-sets">Sets <span id="rel-setsA">0</span> : <span id="rel-setsB">0</span></div>
+</div>
+
+<button class="relogio-btn relogio-btn-a" onclick="pontuar('A')">
++ <span id="rel-btnA">Jogador A</span>
+</button>
+
+<button class="relogio-btn relogio-btn-b" onclick="pontuar('B')">
++ <span id="rel-btnB">Jogador B</span>
+</button>
+
+<div class="relogio-acoes">
+<button class="relogio-acao" onclick="desfazer()">CORRIGIR</button>
+<button class="relogio-acao" onclick="voltarAoMenu()">SAIR</button>
+</div>
+</div>
+
 <script>
 const firebaseConfig = {
 apiKey: "AIzaSyCrXBORBx_2Y-ifCPsJGENFSB7MDuDCxDQ",
@@ -338,6 +457,7 @@ const database = firebase.database();
 let salaId = null;
 let ehRelogio = false;
 let ultimoPlacarFalado = "";
+let ultimoComandoRelogio = null;
 let intervaloCronometro = null;
 
 let configs = {
@@ -431,10 +551,14 @@ document.getElementById("tela-config").style.display = "none";
 document.getElementById("tela-placar").style.display = "flex";
 
 atualizarTelaVisual();
+atualizarTelaRelogioLeve();
 iniciarCronometroVisual();
 
 if (salaId) {
-setTimeout(escutarFirebase, 300);
+setTimeout(() => {
+escutarFirebase();
+escutarComandosRelogio();
+}, 300);
 }
 
 } catch(e) {
@@ -747,12 +871,87 @@ return tA > tB ? `${tA} ${tB}, ${configs.nomeA}.` : `${tB} ${tA}, ${configs.nome
 return textoPontosDentroDoGame();
 }
 
+
+function mostrarTelaRelogioLeve() {
+document.getElementById("tela-config").style.display = "none";
+document.getElementById("tela-placar").style.display = "none";
+document.getElementById("modo-relogio-leve").style.display = "flex";
+}
+
+function atualizarTelaRelogioLeve() {
+let tela = document.getElementById("modo-relogio-leve");
+if (!tela) return;
+
+let p = obterPlacarTexto();
+
+document.getElementById("relogio-status").innerText = `MODO RELÓGIO • SALA ${salaId || "----"}`;
+
+let nomeSacador = jogo.sacadorAtual === "A" ? configs.nomeA : configs.nomeB;
+document.getElementById("relogio-sacador").innerText = `🎾 Sacando: ${nomeSacador}`;
+
+document.getElementById("rel-ptA").innerText = p.a;
+document.getElementById("rel-ptB").innerText = p.b;
+document.getElementById("rel-gamesA").innerText = jogo.gamesA || 0;
+document.getElementById("rel-gamesB").innerText = jogo.gamesB || 0;
+document.getElementById("rel-setsA").innerText = jogo.setsA || 0;
+document.getElementById("rel-setsB").innerText = jogo.setsB || 0;
+
+document.getElementById("rel-btnA").innerText = configs.nomeA || "Jogador A";
+document.getElementById("rel-btnB").innerText = configs.nomeB || "Jogador B";
+}
+
+function mostrarAvisoRelogio(texto) {
+let aviso = document.getElementById("relogio-aviso");
+if (!aviso) return;
+
+aviso.innerText = texto;
+aviso.style.display = "block";
+
+setTimeout(() => {
+aviso.style.display = "none";
+}, 3000);
+}
+
+function enviarComandoRelogio(tipo, jogador = "") {
+if (!salaId) return;
+
+let comando = {
+id: Date.now().toString() + Math.floor(Math.random() * 9999).toString(),
+tipo: tipo,
+jogador: jogador,
+origem: "relogio",
+timestamp: firebase.database.ServerValue.TIMESTAMP
+};
+
+database.ref('salas/' + salaId + '/comandoRelogio').set(comando);
+}
+
+function escutarComandosRelogio() {
+if (!salaId || ehRelogio) return;
+
+database.ref('salas/' + salaId + '/comandoRelogio').on('value', (snapshot) => {
+const comando = snapshot.val();
+if (!comando || !comando.id) return;
+if (comando.id === ultimoComandoRelogio) return;
+
+ultimoComandoRelogio = comando.id;
+
+if (comando.tipo === "ponto" && comando.jogador) {
+pontuar(comando.jogador);
+}
+
+if (comando.tipo === "desfazer") {
+desfazer();
+}
+});
+}
+
 function enviarDadosFirebase(textoLocucao = "") {
 salvarPartidaLocal();
 
 if (!salaId) return;
 
-database.ref('salas/' + salaId).set({
+database.ref('salas/' + salaId).update({
 configs: configs,
 jogo: jogo,
 textoLocucao: textoLocucao
@@ -871,8 +1070,7 @@ ehRelogio = true;
 
 database.ref('salas/' + salaId).once('value', (snapshot) => {
 if (snapshot.exists()) {
-document.getElementById("tela-config").style.display = "none";
-document.getElementById("tela-placar").style.display = "flex";
+mostrarTelaRelogioLeve();
 escutarFirebase();
 } else {
 alert("Sala não encontrada!");
@@ -922,6 +1120,11 @@ jogo.historico.push(JSON.stringify(estado));
 }
 
 function pontuar(jogador) {
+if (ehRelogio) {
+enviarComandoRelogio("ponto", jogador);
+return;
+}
+
 if (jogo.partidaEncerrada) return;
 
 salvarHistorico();
@@ -1337,6 +1540,11 @@ pararCronometroVisual();
 }
 
 function desfazer() {
+if (ehRelogio) {
+enviarComandoRelogio("desfazer");
+return;
+}
+
 if (jogo.historico && jogo.historico.length > 0) {
 let e = JSON.parse(jogo.historico.pop());
 Object.assign(jogo, e);
@@ -1391,6 +1599,7 @@ htmlSetsB += `<span ${classeB}>&nbsp;${set.b}&nbsp;</span>`;
 
 document.getElementById("setsPassadosA").innerHTML = htmlSetsA;
 document.getElementById("setsPassadosB").innerHTML = htmlSetsB;
+atualizarTelaRelogioLeve();
 atualizarCronometro();
 }
 
@@ -1405,17 +1614,6 @@ atualizarCronometro();
 } catch(e) {}
 }, 1000);
 };
-</script>
-
-
-<script>
-if ("serviceWorker" in navigator) {
-window.addEventListener("load", function() {
-navigator.serviceWorker.register("sw.js").catch(function(error) {
-console.log("Service Worker não registrado:", error);
-});
-});
-}
 </script>
 
 </body>
