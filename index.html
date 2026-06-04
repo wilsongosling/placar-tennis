@@ -58,6 +58,26 @@ letter-spacing: 1px;
 .btn-desfazer { color: #ff4444; font-size: 11px; }
 .btn-menu { color: #aaa; font-size: 11px; display: flex; }
 
+#aviso-troca-lado {
+display: none;
+position: absolute;
+top: 50%;
+left: 50%;
+transform: translate(-50%, -50%);
+z-index: 9999;
+background: rgba(0, 255, 102, 0.97);
+color: #000;
+font-size: 28px;
+font-weight: 900;
+padding: 18px 28px;
+border-radius: 14px;
+text-align: center;
+box-shadow: 0 0 25px rgba(0,255,102,0.6);
+letter-spacing: 1px;
+white-space: nowrap;
+}
+
+
 .btn-relogio { display: none; }
 
 #modo-relogio-leve {
@@ -259,13 +279,14 @@ top: 50%;
 transform: translate(-50%, -50%);
 background: #00FF66;
 color: #000;
-font-size: 7vh;
+font-size: 6vh;
 font-weight: 900;
 text-align: center;
-padding: 2vh 4vw;
-border-radius: 8px;
-z-index: 999;
+padding: 2.5vh 5vw;
+border-radius: 10px;
+z-index: 9999;
 white-space: nowrap;
+box-shadow: 0 0 18px rgba(0,255,102,0.75);
 }
 
 /* Apple Watch menor */
@@ -1068,7 +1089,7 @@ aviso.style.display = "block";
 
 setTimeout(() => {
 aviso.style.display = "none";
-}, 3000);
+}, 3500);
 }
 
 function enviarComandoRelogio(tipo, jogador = "") {
@@ -1137,7 +1158,7 @@ if (document.getElementById("tela-placar").style.display === "flex") iniciarCron
 
 if (dados.textoLocucao && dados.textoLocucao !== ultimoPlacarFalado) {
 ultimoPlacarFalado = dados.textoLocucao;
-if (ultimoPlacarFalado.includes("Troca de lado")) mostrarAvisoTrocaLado();
+if (ultimoPlacarFalado.includes("Troca de lado")) mostrarAvisoGrande("TROCA DE LADO");
 if (ultimoPlacarFalado.includes("MATCH POINT")) mostrarAvisoGrande("MATCH POINT");
 if (ultimoPlacarFalado.includes("SET POINT")) mostrarAvisoGrande("SET POINT");
 falarPlacar(ultimoPlacarFalado);
@@ -1333,15 +1354,18 @@ return jog === 'A' ? 'B' : 'A';
 
 function mostrarAvisoGrande(texto) {
 let aviso = document.getElementById("aviso-troca-lado");
-if (!aviso) return;
 
+if (aviso) {
 aviso.innerText = texto;
 aviso.style.display = "block";
 
 setTimeout(() => {
 aviso.style.display = "none";
 aviso.innerText = "TROCA DE LADO";
-}, 3000);
+}, 3500);
+}
+
+mostrarAvisoRelogio(texto);
 }
 
 function jogadorGanhariaGame(jogador) {
@@ -1451,7 +1475,7 @@ atualizarTelaVisual();
 let textoFalar = gerarTextoLocucao(jogador);
 
 if (jogo.mostrarTrocaLado) {
-mostrarAvisoTrocaLado();
+mostrarAvisoGrande("TROCA DE LADO");
 textoFalar += " | Troca de lado.";
 jogo.mostrarTrocaLado = false;
 }
