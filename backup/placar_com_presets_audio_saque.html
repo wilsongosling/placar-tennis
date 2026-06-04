@@ -3,21 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>GameScore</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#000000">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="PlacarPro">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
-
+<title>Placar de Tênis Pro Sync</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
-body { background-color: #000; color: #fff; font-family: Arial, sans-serif; overflow-y: auto; overflow-x: hidden; }
+body { background-color: #000; color: #fff; font-family: Arial, sans-serif; overflow: hidden; }
 
 #tela-config { padding: 20px; display: flex; flex-direction: column; gap: 10px; max-width: 400px; margin: 0 auto; min-height: 100vh; overflow-y: auto; }
 h2 { text-align: center; color: #00FF66; margin-bottom: 5px; font-size: 20px; }
@@ -29,12 +22,6 @@ select, input { background: #222; color: #fff; border: 1px solid #444; padding: 
 .btn-iniciar { background: #00FF66; color: #000; font-weight: bold; border: none; padding: 14px; border-radius: 8px; font-size: 16px; cursor: pointer; margin-top: 5px; }
 .divisor { text-align: center; color: #555; margin: 10px 0; font-size: 12px; font-weight: bold; text-transform: uppercase; }
 .btn-conectar { background: #00E0FF; color: #000; font-weight: bold; border: none; padding: 14px; border-radius: 8px; font-size: 16px; cursor: pointer; }
-.btn-avancado { background: #181818; color: #00E0FF; border: 1px solid #333; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; text-align: left; }
-#config-avancadas { display: none; flex-direction: column; gap: 10px; border: 1px solid #222; background: #080808; padding: 12px; border-radius: 10px; }
-.grupo-config { border-top: 1px solid #222; padding-top: 10px; display: flex; flex-direction: column; gap: 10px; }
-.grupo-config:first-child { border-top: none; padding-top: 0; }
-.titulo-grupo { color: #00FF66; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.8px; }
-.resumo-modalidade { background: #111; color: #aaa; border: 1px solid #222; border-radius: 8px; padding: 10px; font-size: 12px; line-height: 1.4; }
 
 #tela-placar { display: none; height: 100vh; width: 100vw; flex-direction: column; position: relative; }
 #info-sala { position: absolute; top: 2px; left: 50%; transform: translateX(-50%); font-size: 10px; color: #00E0FF; font-weight: bold; z-index: 100; background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 4px; }
@@ -48,14 +35,6 @@ select, input { background: #222; color: #fff; border: 1px solid #444; padding: 
 .label-pequena { font-size: 9px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; text-align: center; }
 .num-pontos { font-size: 22px; font-weight: 800; color: #00FF66; margin-top: 2px; }
 
-.cronometro {
-font-size: 13px;
-font-weight: bold;
-color: #00E0FF;
-margin-top: 6px;
-letter-spacing: 1px;
-}
-
 .display-sets { display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 13px; border-left: 1px solid #333; border-right: 1px solid #333; height: 100%; flex: 1; margin: 0 10px; }
 .linha-set { display: flex; gap: 6px; color: #888; align-items: center; width: 100%; justify-content: center; }
 .game-atual { color: #FFA500; font-weight: bold; font-size: 16px; margin-right: 4px; min-width: 15px; text-align: center; }
@@ -64,24 +43,6 @@ letter-spacing: 1px;
 .btn-acao-painel { background: #222; border: none; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 4px; padding: 8px; }
 .btn-desfazer { color: #ff4444; font-size: 11px; }
 .btn-menu { color: #aaa; font-size: 11px; display: flex; }
-
-#aviso-troca-lado {
-display: none;
-position: absolute;
-top: 50%;
-left: 50%;
-transform: translate(-50%, -50%);
-z-index: 999;
-background: rgba(0, 255, 102, 0.95);
-color: #000;
-font-size: 28px;
-font-weight: 900;
-padding: 18px 28px;
-border-radius: 14px;
-text-align: center;
-box-shadow: 0 0 25px rgba(0,255,102,0.6);
-letter-spacing: 1px;
-}
 
 @media (orientation: portrait) {
 #tela-placar { flex-direction: column; }
@@ -115,12 +76,6 @@ letter-spacing: 1px;
 <div id="tela-config">
 <h2>Configurar Jogo</h2>
 
-<div id="continuar-partida" class="resumo-modalidade" style="display:none;">
-Existe uma partida salva neste aparelho.
-<button type="button" class="btn-iniciar" style="margin-top:8px;" onclick="continuarPartidaSalva()">CONTINUAR PARTIDA</button>
-<button type="button" class="btn-avancado" style="margin-top:6px; width:100%;" onclick="apagarPartidaSalva()">APAGAR PARTIDA SALVA</button>
-</div>
-
 <div class="campo-duplo">
 <div class="campo">
 <label>Jogador A:</label>
@@ -144,16 +99,6 @@ Existe uma partida salva neste aparelho.
 </select>
 </div>
 
-<div id="resumo-modalidade" class="resumo-modalidade">
-Tênis tradicional: 6 games, melhor de 3 sets, com vantagem e tie-break em 6x6.
-</div>
-
-<button type="button" id="btn-avancado" class="btn-avancado" onclick="alternarConfiguracoesAvancadas()">▶ Configurações Avançadas</button>
-
-<div id="config-avancadas">
-
-<div class="grupo-config">
-<div class="titulo-grupo">Áudio</div>
 <div class="campo">
 <label>Áudio do placar:</label>
 <select id="cfg-audio">
@@ -164,25 +109,6 @@ Tênis tradicional: 6 games, melhor de 3 sets, com vantagem e tie-break em 6x6.
 </select>
 </div>
 
-<div class="campo">
-<label>Cronômetro:</label>
-<select id="cfg-cronometro">
-<option value="sim">Mostrar duração da partida</option>
-<option value="nao">Ocultar duração da partida</option>
-</select>
-</div>
-
-<div class="campo">
-<label>Avisos importantes:</label>
-<select id="cfg-avisos-pontos">
-<option value="sim">Mostrar Set Point e Match Point</option>
-<option value="nao">Desativar avisos</option>
-</select>
-</div>
-</div>
-
-<div class="grupo-config">
-<div class="titulo-grupo">Saque e lado</div>
 <div class="campo-duplo">
 <div class="campo">
 <label>Quem saca primeiro:</label>
@@ -202,19 +128,6 @@ Tênis tradicional: 6 games, melhor de 3 sets, com vantagem e tie-break em 6x6.
 </div>
 </div>
 
-<div class="campo">
-<label>Troca de lado:</label>
-<select id="cfg-troca-lado">
-<option value="impares">Games ímpares</option>
-<option value="set">Final de cada set</option>
-<option value="ambos">Games ímpares + Final do set</option>
-<option value="desativado">Desativada</option>
-</select>
-</div>
-</div>
-
-<div class="grupo-config">
-<div class="titulo-grupo">Regras do jogo</div>
 <div class="campo-duplo">
 <div class="campo">
 <label>Games por Set:</label>
@@ -265,9 +178,6 @@ Tênis tradicional: 6 games, melhor de 3 sets, com vantagem e tie-break em 6x6.
 <input type="number" id="cfg-limite-pontos-tb" value="10" min="5" max="30">
 </div>
 </div>
-</div>
-
-</div>
 
 <button class="btn-iniciar" onclick="iniciarJogo()">COMEÇAR JOGO</button>
 
@@ -282,7 +192,6 @@ Tênis tradicional: 6 games, melhor de 3 sets, com vantagem e tie-break em 6x6.
 </div>
 
 <div id="tela-placar">
-<div id="aviso-troca-lado">TROCA DE LADO</div>
 <div id="info-sala">SALA: ----</div>
 
 <button id="btn-jogA" class="btn-jogador" onclick="pontuar('A')">
@@ -296,7 +205,6 @@ Tênis tradicional: 6 games, melhor de 3 sets, com vantagem e tie-break em 6x6.
 <div class="display-pontos">
 <span id="rotuloPontos" class="label-pequena">PONTOS</span>
 <span class="num-pontos"><span id="ptA">0</span>:<span id="ptB">0</span></span>
-<span id="cronometro" class="cronometro">00:00:00</span>
 </div>
 
 <div class="display-sets">
@@ -338,7 +246,6 @@ const database = firebase.database();
 let salaId = null;
 let ehRelogio = false;
 let ultimoPlacarFalado = "";
-let intervaloCronometro = null;
 
 let configs = {
 nomeA: "Jogador A",
@@ -347,9 +254,6 @@ modalidade: "tenis",
 modoAudio: "completo",
 sacadorInicial: "A",
 trocaSaque: "1",
-trocaLado: "impares",
-mostrarCronometro: true,
-avisosPontos: true,
 limiteVantagens: "sem_limites",
 usarTieBreak: true,
 regraTb: "vencer_por_dois",
@@ -371,161 +275,12 @@ emTieBreak: false,
 pontosTbA: 0,
 pontosTbB: 0,
 sacadorAtual: "A",
-ultimoAvisoTrocaLado: "",
-mostrarTrocaLado: false,
-inicioPartida: null,
-tempoFinalPartida: null,
 historicoSets: [],
 partidaEncerrada: false,
 historico: []
 };
 
 const nomesPontos = { 0: "0", 1: "15", 2: "30", 3: "40" };
-
-function salvarPartidaLocal() {
-try {
-localStorage.setItem("placarPro_partidaAtual", JSON.stringify({
-configs: configs,
-jogo: jogo,
-salaId: salaId,
-ehRelogio: ehRelogio
-}));
-} catch(e) {}
-}
-
-function existePartidaSalva() {
-try {
-let dados = localStorage.getItem("placarPro_partidaAtual");
-if (!dados) return false;
-
-let obj = JSON.parse(dados);
-return obj && obj.jogo && !obj.jogo.partidaEncerrada;
-} catch(e) {
-return false;
-}
-}
-
-function mostrarBotaoContinuarSeExistir() {
-let bloco = document.getElementById("continuar-partida");
-if (!bloco) return;
-
-bloco.style.display = existePartidaSalva() ? "block" : "none";
-}
-
-function continuarPartidaSalva() {
-try {
-let dados = localStorage.getItem("placarPro_partidaAtual");
-if (!dados) {
-alert("Nenhuma partida salva encontrada.");
-return;
-}
-
-let obj = JSON.parse(dados);
-
-configs = obj.configs || configs;
-jogo = obj.jogo || jogo;
-salaId = obj.salaId || null;
-ehRelogio = obj.ehRelogio || false;
-
-document.getElementById("tela-config").style.display = "none";
-document.getElementById("tela-placar").style.display = "flex";
-
-atualizarTelaVisual();
-iniciarCronometroVisual();
-
-if (salaId) {
-setTimeout(escutarFirebase, 300);
-}
-
-} catch(e) {
-alert("Não foi possível continuar a partida salva.");
-}
-}
-
-function apagarPartidaSalva() {
-if (confirm("Apagar a partida salva neste aparelho?")) {
-localStorage.removeItem("placarPro_partidaAtual");
-mostrarBotaoContinuarSeExistir();
-}
-}
-
-function formatarTempo(ms) {
-if (!ms || ms < 0) ms = 0;
-
-let totalSegundos = Math.floor(ms / 1000);
-let horas = Math.floor(totalSegundos / 3600);
-let minutos = Math.floor((totalSegundos % 3600) / 60);
-let segundos = totalSegundos % 60;
-
-return String(horas).padStart(2, "0") + ":" + String(minutos).padStart(2, "0") + ":" + String(segundos).padStart(2, "0");
-}
-
-function atualizarCronometro() {
-let el = document.getElementById("cronometro");
-if (!el) return;
-
-if (!configs.mostrarCronometro) {
-el.style.display = "none";
-return;
-}
-
-el.style.display = "block";
-
-if (!jogo.inicioPartida) {
-jogo.inicioPartida = new Date().getTime();
-}
-
-let tempoBase = jogo.partidaEncerrada && jogo.tempoFinalPartida ? jogo.tempoFinalPartida : new Date().getTime();
-el.innerText = formatarTempo(tempoBase - jogo.inicioPartida);
-}
-
-function iniciarCronometroVisual() {
-if (intervaloCronometro) {
-clearInterval(intervaloCronometro);
-}
-
-atualizarCronometro();
-
-intervaloCronometro = setInterval(function() {
-atualizarCronometro();
-salvarPartidaLocal();
-}, 1000);
-}
-
-function pararCronometroVisual() {
-if (intervaloCronometro) {
-clearInterval(intervaloCronometro);
-intervaloCronometro = null;
-}
-atualizarCronometro();
-}
-
-function alternarConfiguracoesAvancadas() {
-const bloco = document.getElementById("config-avancadas");
-const botao = document.getElementById("btn-avancado");
-
-if (bloco.style.display === "flex") {
-bloco.style.display = "none";
-botao.innerText = "▶ Configurações Avançadas";
-} else {
-bloco.style.display = "flex";
-botao.innerText = "▼ Configurações Avançadas";
-}
-}
-
-function atualizarResumoModalidade() {
-const modalidade = document.getElementById("cfg-modalidade").value;
-let texto = "";
-
-if (modalidade === "tenis") texto = "Tênis tradicional: 6 games, melhor de 3 sets, com vantagem e tie-break em 6x6.";
-if (modalidade === "beach") texto = "Beach Tennis: 6 games, melhor de 3 sets, sem vantagem e tie-break em 6x6.";
-if (modalidade === "padel") texto = "Padel: 6 games, melhor de 3 sets, com vantagem e tie-break em 6x6.";
-if (modalidade === "fast4") texto = "Fast4: 4 games, melhor de 3 sets, sem vantagem e tie-break rápido.";
-if (modalidade === "proset8") texto = "Pro Set 8 Games: vence com 8 games, 7x7 vai até 9, 8x8 vai para tie-break até 7.";
-if (modalidade === "personalizado") texto = "Personalizado: ajuste manualmente as regras nas configurações avançadas.";
-
-document.getElementById("resumo-modalidade").innerText = texto;
-}
 
 function aplicarPreset() {
 const modalidade = document.getElementById("cfg-modalidade").value;
@@ -539,7 +294,6 @@ document.getElementById("cfg-regra-tb").value = "vencer_por_dois";
 document.getElementById("cfg-tipo-tb").value = "infinito";
 document.getElementById("cfg-limite-pontos-tb").value = 7;
 document.getElementById("cfg-troca-saque").value = "1";
-document.getElementById("cfg-troca-lado").value = "impares";
 }
 
 if (modalidade === "beach") {
@@ -551,7 +305,6 @@ document.getElementById("cfg-regra-tb").value = "vencer_por_dois";
 document.getElementById("cfg-tipo-tb").value = "infinito";
 document.getElementById("cfg-limite-pontos-tb").value = 7;
 document.getElementById("cfg-troca-saque").value = "1";
-document.getElementById("cfg-troca-lado").value = "impares";
 }
 
 if (modalidade === "padel") {
@@ -563,7 +316,6 @@ document.getElementById("cfg-regra-tb").value = "vencer_por_dois";
 document.getElementById("cfg-tipo-tb").value = "infinito";
 document.getElementById("cfg-limite-pontos-tb").value = 7;
 document.getElementById("cfg-troca-saque").value = "1";
-document.getElementById("cfg-troca-lado").value = "impares";
 }
 
 if (modalidade === "fast4") {
@@ -575,7 +327,6 @@ document.getElementById("cfg-regra-tb").value = "com_limite";
 document.getElementById("cfg-tipo-tb").value = "infinito";
 document.getElementById("cfg-limite-pontos-tb").value = 7;
 document.getElementById("cfg-troca-saque").value = "1";
-document.getElementById("cfg-troca-lado").value = "impares";
 }
 
 if (modalidade === "proset8") {
@@ -587,24 +338,22 @@ document.getElementById("cfg-regra-tb").value = "vencer_por_dois";
 document.getElementById("cfg-tipo-tb").value = "infinito";
 document.getElementById("cfg-limite-pontos-tb").value = 7;
 document.getElementById("cfg-troca-saque").value = "1";
-document.getElementById("cfg-troca-lado").value = "impares";
 }
 
 atualizarVisibilidadeTieBreak();
 alternarVisibilidadeLimiteTb();
 atualizarTextosDinamicos();
-atualizarResumoModalidade();
 }
 
 function podeFalar(texto) {
 if (configs.modoAudio === "desligado") return false;
 
 if (configs.modoAudio === "avisos") {
-return texto.includes("Vitória") || texto.includes("Fim") || texto.includes("Tie-break") || texto.includes("Troca") || texto.includes("sacador") || texto.includes("MATCH POINT") || texto.includes("SET POINT");
+return texto.includes("Vitória") || texto.includes("Fim") || texto.includes("Tie-break") || texto.includes("Troca") || texto.includes("sacador");
 }
 
 if (configs.modoAudio === "games_sets") {
-return texto.includes("Game") || texto.includes("Set") || texto.includes("Vitória") || texto.includes("Fim") || texto.includes("Tie-break") || texto.includes("Troca") || texto.includes("sacador") || texto.includes("MATCH POINT") || texto.includes("SET POINT");
+return texto.includes("Game") || texto.includes("Set") || texto.includes("Vitória") || texto.includes("Fim") || texto.includes("Tie-break") || texto.includes("Troca") || texto.includes("sacador");
 }
 
 return true;
@@ -615,109 +364,15 @@ if (!podeFalar(texto)) return;
 
 if ('speechSynthesis' in window && !ehRelogio) {
 window.speechSynthesis.cancel();
-
-let partes = texto
-.split("|")
-.map(p => p.trim())
-.filter(p => p.length > 0);
-
-let indice = 0;
-
-function atrasoDepoisDaFrase(frase) {
-if (frase.includes("Troca de lado")) return 1100;
-if (frase.includes("MATCH POINT")) return 1200;
-if (frase.includes("SET POINT")) return 1000;
-if (frase.includes("Sacando")) return 900;
-if (frase.includes("Game")) return 850;
-return 650;
-}
-
-function velocidadeDaFrase(frase) {
-if (frase.includes("MATCH POINT")) return 0.98;
-if (frase.includes("SET POINT")) return 1.00;
-if (frase.includes("Troca de lado")) return 1.00;
-if (frase.includes("Sacando")) return 1.02;
-return 1.05;
-}
-
-function falarParte() {
-if (indice >= partes.length) return;
-
-let frase = partes[indice];
-
-let fala = new SpeechSynthesisUtterance(frase);
+let fala = new SpeechSynthesisUtterance(texto);
 fala.lang = 'pt-BR';
-fala.rate = velocidadeDaFrase(frase);
-fala.pitch = 1;
-
-fala.onend = function() {
-indice++;
-setTimeout(falarParte, atrasoDepoisDaFrase(frase));
-};
-
+fala.rate = 1.15;
 window.speechSynthesis.speak(fala);
-}
-
-falarParte();
 }
 }
 
 function nomeDoJogador(jogador) {
 return jogador === "A" ? configs.nomeA : configs.nomeB;
-}
-
-function textoPlacarGamesFalado() {
-let gA = jogo.gamesA;
-let gB = jogo.gamesB;
-
-if (gA === gB) {
-return `${gA} iguais`;
-}
-
-if (gA > gB) {
-return `${gA} a ${gB}. ${configs.nomeA}`;
-}
-
-return `${gB} a ${gA}. ${configs.nomeB}`;
-}
-
-function textoPlacarSetFalado(set) {
-let a = Number(set.a || 0);
-let b = Number(set.b || 0);
-
-if (a === b) {
-return `${a} iguais`;
-}
-
-if (a > b) {
-return `${a} a ${b}. ${configs.nomeA}`;
-}
-
-return `${b} a ${a}. ${configs.nomeB}`;
-}
-
-function textoPontosDentroDoGame() {
-let p = obterPlacarTexto();
-
-if (p.a === "Adv") return `Vantagem ${configs.nomeA}.`;
-if (p.b === "Adv") return `Vantagem ${configs.nomeB}.`;
-
-if (jogo.pontosA === 3 && jogo.pontosB === 3) return "Iguais.";
-if (jogo.pontosA === jogo.pontosB && jogo.pontosA > 0) return `${nomesPontos[jogo.pontosA]} iguais.`;
-
-if (configs.trocaSaque !== "manual") {
-if (jogo.sacadorAtual === "A") {
-return `${nomesPontos[jogo.pontosA]} ${nomesPontos[jogo.pontosB]}.`;
-} else {
-return `${nomesPontos[jogo.pontosB]} ${nomesPontos[jogo.pontosA]}.`;
-}
-}
-
-if (jogo.pontosA > jogo.pontosB) {
-return `${nomesPontos[jogo.pontosA]} ${nomesPontos[jogo.pontosB]}, ${configs.nomeA}.`;
-} else {
-return `${nomesPontos[jogo.pontosB]} ${nomesPontos[jogo.pontosA]}, ${configs.nomeB}.`;
-}
 }
 
 function gerarTextoLocucao(jogadorPontuou) {
@@ -729,12 +384,12 @@ return `Vitória de ${nomeVencedor}! Fim de jogo.`;
 if (jogo.pontosA === 0 && jogo.pontosB === 0 && jogo.gamesA === 0 && jogo.gamesB === 0 && jogo.historicoSets && jogo.historicoSets.length > 0) {
 let ultimoSet = jogo.historicoSets[jogo.historicoSets.length - 1];
 let nomeSetVencedor = ultimoSet.vencedor === 'A' ? configs.nomeA : configs.nomeB;
-return `Set para ${nomeSetVencedor}. | ${textoPlacarSetFalado(ultimoSet)}. | Sacando: ${nomeDoJogador(jogo.sacadorAtual)}.`;
+return `Set para ${nomeSetVencedor}. ${Math.max(ultimoSet.a, ultimoSet.b)} ${Math.min(ultimoSet.a, ultimoSet.b)}. Próximo sacador: ${nomeDoJogador(jogo.sacadorAtual)}.`;
 }
 
 if (jogo.pontosA === 0 && jogo.pontosB === 0 && !jogo.emTieBreak) {
 let nomeGameVencedor = jogadorPontuou === 'A' ? configs.nomeA : configs.nomeB;
-return `Game ${nomeGameVencedor}. | ${textoPlacarGamesFalado()}. | Sacando: ${nomeDoJogador(jogo.sacadorAtual)}.`;
+return `Game ${nomeGameVencedor}. Games ${Math.max(jogo.gamesA, jogo.gamesB)} ${Math.min(jogo.gamesA, jogo.gamesB)}. Próximo sacador: ${nomeDoJogador(jogo.sacadorAtual)}.`;
 }
 
 if (jogo.emTieBreak) {
@@ -744,14 +399,22 @@ if (tA === tB) return `${tA} iguais.`;
 return tA > tB ? `${tA} ${tB}, ${configs.nomeA}.` : `${tB} ${tA}, ${configs.nomeB}.`;
 }
 
-return textoPontosDentroDoGame();
+let p = obterPlacarTexto();
+
+if (p.a === "Adv") return `Vantagem ${configs.nomeA}.`;
+if (p.b === "Adv") return `Vantagem ${configs.nomeB}.`;
+if (jogo.pontosA === 3 && jogo.pontosB === 3) return "Iguais.";
+if (jogo.pontosA === jogo.pontosB && jogo.pontosA > 0) return `${nomesPontos[jogo.pontosA]} iguais.`;
+
+if (jogo.pontosA > jogo.pontosB) {
+return `${nomesPontos[jogo.pontosA]} ${nomesPontos[jogo.pontosB]}, ${configs.nomeA}.`;
+} else {
+return `${nomesPontos[jogo.pontosB]} ${nomesPontos[jogo.pontosA]}, ${configs.nomeB}.`;
+}
 }
 
 function enviarDadosFirebase(textoLocucao = "") {
-salvarPartidaLocal();
-
 if (!salaId) return;
-
 database.ref('salas/' + salaId).set({
 configs: configs,
 jogo: jogo,
@@ -775,13 +438,9 @@ if (dados && dados.jogo) {
 configs = dados.configs || configs;
 jogo = dados.jogo;
 atualizarTelaVisual();
-if (document.getElementById("tela-placar").style.display === "flex") iniciarCronometroVisual();
 
 if (dados.textoLocucao && dados.textoLocucao !== ultimoPlacarFalado) {
 ultimoPlacarFalado = dados.textoLocucao;
-if (ultimoPlacarFalado.includes("Troca de lado")) mostrarAvisoTrocaLado();
-if (ultimoPlacarFalado.includes("MATCH POINT")) mostrarAvisoGrande("MATCH POINT");
-if (ultimoPlacarFalado.includes("SET POINT")) mostrarAvisoGrande("SET POINT");
 falarPlacar(ultimoPlacarFalado);
 }
 }
@@ -816,9 +475,6 @@ configs.modalidade = document.getElementById("cfg-modalidade").value;
 configs.modoAudio = document.getElementById("cfg-audio").value;
 configs.sacadorInicial = document.getElementById("cfg-sacador-inicial").value;
 configs.trocaSaque = document.getElementById("cfg-troca-saque").value;
-configs.trocaLado = document.getElementById("cfg-troca-lado").value;
-configs.mostrarCronometro = document.getElementById("cfg-cronometro").value === "sim";
-configs.avisosPontos = document.getElementById("cfg-avisos-pontos").value === "sim";
 configs.limiteVantagens = document.getElementById("cfg-vantagens").value;
 configs.usarTieBreak = document.getElementById("cfg-tiebreak").value === "sim";
 configs.regraTb = document.getElementById("cfg-regra-tb").value;
@@ -839,10 +495,6 @@ emTieBreak: false,
 pontosTbA: 0,
 pontosTbB: 0,
 sacadorAtual: configs.sacadorInicial,
-ultimoAvisoTrocaLado: "",
-mostrarTrocaLado: false,
-inicioPartida: null,
-tempoFinalPartida: null,
 historicoSets: [],
 partidaEncerrada: false,
 historico: []
@@ -852,9 +504,7 @@ document.getElementById("tela-config").style.display = "none";
 document.getElementById("tela-placar").style.display = "flex";
 
 atualizarTelaVisual();
-iniciarCronometroVisual();
-setTimeout(iniciarCronometroVisual, 300);
-enviarDadosFirebase(`Jogo iniciado. | Sacando: ${nomeDoJogador(jogo.sacadorAtual)}.`);
+enviarDadosFirebase(`Jogo iniciado. Primeiro sacador: ${nomeDoJogador(jogo.sacadorAtual)}.`);
 setTimeout(escutarFirebase, 300);
 }
 
@@ -883,14 +533,11 @@ alert("Sala não encontrada!");
 function voltarAoMenu() {
 if (confirm("Deseja voltar ao menu? Isso limpará a sala atual.")) {
 if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-pararCronometroVisual();
 desligarEscutador();
 
 if (salaId && !ehRelogio) {
 database.ref('salas/' + salaId).remove();
 }
-
-localStorage.removeItem("placarPro_partidaAtual");
 
 location.href = location.pathname;
 }
@@ -909,10 +556,6 @@ emTieBreak: jogo.emTieBreak,
 pontosTbA: jogo.pontosTbA,
 pontosTbB: jogo.pontosTbB,
 sacadorAtual: jogo.sacadorAtual,
-ultimoAvisoTrocaLado: jogo.ultimoAvisoTrocaLado,
-mostrarTrocaLado: jogo.mostrarTrocaLado,
-inicioPartida: jogo.inicioPartida,
-tempoFinalPartida: jogo.tempoFinalPartida,
 historicoSets: JSON.parse(JSON.stringify(jogo.historicoSets || [])),
 partidaEncerrada: jogo.partidaEncerrada
 };
@@ -973,138 +616,9 @@ function playerInvertido(jog) {
 return jog === 'A' ? 'B' : 'A';
 }
 
-
-function mostrarAvisoGrande(texto) {
-let aviso = document.getElementById("aviso-troca-lado");
-if (!aviso) return;
-
-aviso.innerText = texto;
-aviso.style.display = "block";
-
-setTimeout(() => {
-aviso.style.display = "none";
-aviso.innerText = "TROCA DE LADO";
-}, 3000);
-}
-
-function jogadorGanhariaGame(jogador) {
-if (jogo.partidaEncerrada) return false;
-if (jogo.emTieBreak) return false;
-
-let ganhador = jogador;
-let perdedor = jogador === "A" ? "B" : "A";
-let pGanhador = jogo["pontos" + ganhador];
-let pPerdedor = jogo["pontos" + perdedor];
-
-if (configs.limiteVantagens === "0" && pGanhador === 3 && pPerdedor === 3) return true;
-if (pGanhador === 4) return true;
-if (pGanhador === 3 && pPerdedor < 3) return true;
-if (configs.limiteVantagens === "1" && pGanhador === 3 && pPerdedor === 3 && jogo.contadorDeuces >= 1) return true;
-
-return false;
-}
-
-function jogadorGanhariaSetComGame(jogador) {
-let gA = jogo.gamesA;
-let gB = jogo.gamesB;
-
-if (jogador === "A") gA++;
-else gB++;
-
-if (configs.modalidade === "proset8") {
-if (jogador === "A") {
-return (gA === 8 && gB <= 6) || (gA === 9 && gB === 7);
-} else {
-return (gB === 8 && gA <= 6) || (gB === 9 && gA === 7);
-}
-}
-
-let gMax = configs.gamesParaVencerSet;
-
-if (configs.usarTieBreak) {
-if (configs.regraTb === "com_limite") {
-if (jogador === "A" && gA >= gMax) return true;
-if (jogador === "B" && gB >= gMax) return true;
-} else {
-if (jogador === "A" && gA >= gMax && (gA - gB) >= 2) return true;
-if (jogador === "B" && gB >= gMax && (gB - gA) >= 2) return true;
-}
-} else {
-if (jogador === "A" && gA >= gMax && (gA - gB) >= 2) return true;
-if (jogador === "B" && gB >= gMax && (gB - gA) >= 2) return true;
-}
-
-return false;
-}
-
-function jogadorGanhariaSetNoTieBreak(jogador) {
-if (!jogo.emTieBreak) return false;
-
-let tA = jogo.pontosTbA;
-let tB = jogo.pontosTbB;
-
-if (jogador === "A") tA++;
-else tB++;
-
-if (configs.tipoTb === "com_limite") {
-if (jogador === "A" && tA >= configs.limitePontosTb && (tA - tB) >= 1) return true;
-if (jogador === "B" && tB >= configs.limitePontosTb && (tB - tA) >= 1) return true;
-} else {
-if (jogador === "A" && tA >= 7 && (tA - tB) >= 2) return true;
-if (jogador === "B" && tB >= 7 && (tB - tA) >= 2) return true;
-}
-
-return false;
-}
-
-function jogadorTeriaMatchPoint(jogador) {
-let setsAtuais = jogador === "A" ? jogo.setsA : jogo.setsB;
-return (setsAtuais + 1) >= configs.setsParaVencer;
-}
-
-function obterAvisoPontoImportante() {
-if (!configs.avisosPontos || jogo.partidaEncerrada) return "";
-
-let candidatos = ["A", "B"];
-
-for (let i = 0; i < candidatos.length; i++) {
-let jogador = candidatos[i];
-let ganhaSet = false;
-
-if (jogo.emTieBreak) {
-ganhaSet = jogadorGanhariaSetNoTieBreak(jogador);
-} else {
-if (jogadorGanhariaGame(jogador)) {
-ganhaSet = jogadorGanhariaSetComGame(jogador);
-}
-}
-
-if (ganhaSet) {
-let nome = nomeDoJogador(jogador);
-if (jogadorTeriaMatchPoint(jogador)) return "MATCH POINT " + nome;
-return "SET POINT " + nome;
-}
-}
-
-return "";
-}
-
 function finalizarPonto(jogador) {
 atualizarTelaVisual();
 let textoFalar = gerarTextoLocucao(jogador);
-
-if (jogo.mostrarTrocaLado) {
-mostrarAvisoTrocaLado();
-textoFalar += " | Troca de lado.";
-jogo.mostrarTrocaLado = false;
-}
-
-let avisoPonto = obterAvisoPontoImportante();
-if (avisoPonto) {
-mostrarAvisoGrande(avisoPonto);
-textoFalar += " | " + avisoPonto + ".";
-}
-
 enviarDadosFirebase(textoFalar);
 }
 
@@ -1182,47 +696,7 @@ function trocarSacadorManual() {
 salvarHistorico();
 jogo.sacadorAtual = jogo.sacadorAtual === "A" ? "B" : "A";
 atualizarTelaVisual();
-enviarDadosFirebase(`Sacador alterado. | Sacando: ${nomeDoJogador(jogo.sacadorAtual)}.`);
-}
-
-
-function mostrarAvisoTrocaLado() {
-mostrarAvisoGrande("TROCA DE LADO");
-}
-
-function deveTrocarLadoPorGame() {
-if (configs.trocaLado !== "impares" && configs.trocaLado !== "ambos") return false;
-
-let totalAtual = jogo.gamesA + jogo.gamesB;
-let chave = "game-" + totalAtual + "-set-" + (jogo.historicoSets ? jogo.historicoSets.length : 0);
-
-if (totalAtual > 0 && totalAtual % 2 === 1 && jogo.ultimoAvisoTrocaLado !== chave) {
-jogo.ultimoAvisoTrocaLado = chave;
-jogo.mostrarTrocaLado = true;
-return true;
-}
-
-return false;
-}
-
-function deveTrocarLadoPorSet() {
-if (configs.trocaLado !== "set" && configs.trocaLado !== "ambos") return false;
-
-let totalSets = jogo.historicoSets ? jogo.historicoSets.length : 0;
-let chave = "set-" + totalSets;
-
-if (totalSets > 0 && jogo.ultimoAvisoTrocaLado !== chave) {
-jogo.ultimoAvisoTrocaLado = chave;
-jogo.mostrarTrocaLado = true;
-return true;
-}
-
-return false;
-}
-
-function avisarTrocaDeLado() {
-mostrarAvisoTrocaLado();
-return " Troca de lado.";
+enviarDadosFirebase(`Sacador alterado para ${nomeDoJogador(jogo.sacadorAtual)}.`);
 }
 
 function colocarGame(jogador) {
@@ -1236,8 +710,6 @@ jogo.pontosB = 0;
 jogo.contadorDeuces = 0;
 
 atualizarSacadorAutomatico();
-
-let avisoTrocaPorGame = deveTrocarLadoPorGame();
 
 let gA = jogo.gamesA;
 let gB = jogo.gamesB;
@@ -1319,8 +791,6 @@ vencedor: jogador
 if (jogador === 'A') jogo.setsA++;
 else jogo.setsB++;
 
-let avisoTrocaPorSet = deveTrocarLadoPorSet();
-
 jogo.gamesA = 0;
 jogo.gamesB = 0;
 jogo.emTieBreak = false;
@@ -1331,8 +801,6 @@ atualizarSacadorAutomatico();
 
 if (jogo.setsA === configs.setsParaVencer || jogo.setsB === configs.setsParaVencer) {
 jogo.partidaEncerrada = true;
-if (!jogo.tempoFinalPartida) jogo.tempoFinalPartida = new Date().getTime();
-pararCronometroVisual();
 }
 }
 
@@ -1391,31 +859,12 @@ htmlSetsB += `<span ${classeB}>&nbsp;${set.b}&nbsp;</span>`;
 
 document.getElementById("setsPassadosA").innerHTML = htmlSetsA;
 document.getElementById("setsPassadosB").innerHTML = htmlSetsB;
-atualizarCronometro();
 }
 
 window.onload = function() {
 aplicarPreset();
 atualizarTextosDinamicos();
-mostrarBotaoContinuarSeExistir();
-
-setInterval(function() {
-try {
-atualizarCronometro();
-} catch(e) {}
-}, 1000);
 };
-</script>
-
-
-<script>
-if ("serviceWorker" in navigator) {
-window.addEventListener("load", function() {
-navigator.serviceWorker.register("sw.js").catch(function(error) {
-console.log("Service Worker não registrado:", error);
-});
-});
-}
 </script>
 
 </body>
