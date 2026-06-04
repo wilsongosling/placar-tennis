@@ -68,113 +68,144 @@ background: #000;
 color: #fff;
 padding: 8px;
 flex-direction: column;
-gap: 6px;
 overflow: hidden;
+position: relative;
+font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
 }
 
-#relogio-status {
-font-size: 10px;
-color: #00E0FF;
-text-align: center;
-font-weight: bold;
+.relogio-topo {
+height: 18%;
+position: relative;
+border-bottom: 1px solid #777;
 }
 
-#relogio-sacador {
-font-size: 13px;
-color: #00FF66;
-text-align: center;
-font-weight: bold;
+.relogio-meio {
+height: 20%;
+display: flex;
+align-items: center;
+justify-content: center;
+border-bottom: 1px solid #777;
+}
+
+.relogio-baixo {
+height: 54%;
+position: relative;
+}
+
+.relogio-nome-a {
+position: absolute;
+top: 0;
+left: 2px;
+font-size: 15px;
+color: #fff;
 white-space: nowrap;
+max-width: 45%;
 overflow: hidden;
 text-overflow: ellipsis;
 }
 
+.relogio-tempo {
+position: absolute;
+top: 0;
+left: 50%;
+transform: translateX(-50%);
+font-size: 13px;
+color: #fff;
+white-space: nowrap;
+}
+
+.relogio-ponto-a {
+position: absolute;
+left: 50%;
+top: 44%;
+transform: translate(-50%, -50%);
+font-size: 76px;
+font-weight: 300;
+line-height: 1;
+color: #fff;
+background: transparent;
+border: none;
+width: 100%;
+height: 80%;
+cursor: pointer;
+}
+
+.relogio-nome-b {
+position: absolute;
+top: 6px;
+left: 2px;
+font-size: 15px;
+color: #fff;
+white-space: nowrap;
+max-width: 55%;
+overflow: hidden;
+text-overflow: ellipsis;
+}
+
+.relogio-ponto-b {
+position: absolute;
+left: 50%;
+top: 45%;
+transform: translate(-50%, -50%);
+font-size: 76px;
+font-weight: 300;
+line-height: 1;
+color: #fff;
+background: transparent;
+border: none;
+width: 100%;
+height: 78%;
+cursor: pointer;
+}
+
+.relogio-corrigir {
+position: absolute;
+left: 50%;
+bottom: 0;
+transform: translateX(-50%);
+font-size: 12px;
+color: #ddd;
+background: transparent;
+border: none;
+height: 24px;
+width: 90%;
+cursor: pointer;
+}
+
+.relogio-sets-centro {
+font-size: 16px;
+line-height: 1.25;
+color: #fff;
+text-align: center;
+min-width: 70px;
+}
+
+.relogio-linha-set {
+display: flex;
+justify-content: center;
+gap: 16px;
+}
+
+.relogio-set-ganho {
+font-weight: 900;
+text-decoration: underline;
+}
+
 #relogio-aviso {
 display: none;
+position: absolute;
+left: 50%;
+top: 50%;
+transform: translate(-50%, -50%);
 background: #00FF66;
 color: #000;
-font-size: 14px;
+font-size: 16px;
 font-weight: 900;
 text-align: center;
-padding: 6px;
+padding: 8px 12px;
 border-radius: 8px;
-}
-
-#relogio-placar {
-background: #111;
-border: 1px solid #222;
-border-radius: 10px;
-padding: 7px;
-text-align: center;
-}
-
-.relogio-pontos {
-font-size: 22px;
-font-weight: 900;
-color: #fff;
-line-height: 1.1;
-}
-
-.relogio-games {
-font-size: 13px;
-font-weight: bold;
-color: #FFA500;
-margin-top: 2px;
-}
-
-.relogio-sets {
-font-size: 11px;
-color: #aaa;
-margin-top: 2px;
-}
-
-.relogio-btn {
-flex: 1;
-border: none;
-border-radius: 12px;
-font-size: 18px;
-font-weight: 900;
-cursor: pointer;
-color: #000;
-min-height: 58px;
-}
-
-.relogio-btn-a { background: #00FF66; }
-.relogio-btn-b { background: #00E0FF; }
-
-.relogio-acoes {
-display: flex;
-gap: 6px;
-height: 38px;
-}
-
-.relogio-acao {
-flex: 1;
-background: #222;
-color: #fff;
-border: 1px solid #333;
-border-radius: 8px;
-font-size: 11px;
-font-weight: bold;
-}
-
-
-#aviso-troca-lado {
-display: none;
-position: absolute;
-top: 50%;
-left: 50%;
-transform: translate(-50%, -50%);
 z-index: 999;
-background: rgba(0, 255, 102, 0.95);
-color: #000;
-font-size: 28px;
-font-weight: 900;
-padding: 18px 28px;
-border-radius: 14px;
-text-align: center;
-box-shadow: 0 0 25px rgba(0,255,102,0.6);
-letter-spacing: 1px;
+white-space: nowrap;
 }
 
 @media (orientation: portrait) {
@@ -416,27 +447,25 @@ Tênis tradicional: 6 games, melhor de 3 sets, com vantagem e tie-break em 6x6.
 </div>
 
 <div id="modo-relogio-leve">
-<div id="relogio-status">MODO RELÓGIO • SALA ----</div>
-<div id="relogio-sacador">🎾 Sacador</div>
 <div id="relogio-aviso">TROCA DE LADO</div>
 
-<div id="relogio-placar">
-<div class="relogio-pontos"><span id="rel-ptA">0</span> : <span id="rel-ptB">0</span></div>
-<div class="relogio-games">Games <span id="rel-gamesA">0</span> : <span id="rel-gamesB">0</span></div>
-<div class="relogio-sets">Sets <span id="rel-setsA">0</span> : <span id="rel-setsB">0</span></div>
+<div class="relogio-topo">
+<div id="relogio-nomeA" class="relogio-nome-a">João 🎾</div>
+<div id="relogio-tempo" class="relogio-tempo">0:00:00</div>
+<button id="relogio-pontoA" class="relogio-ponto-a" onclick="pontuar('A')">40</button>
 </div>
 
-<button class="relogio-btn relogio-btn-a" onclick="pontuar('A')">
-+ <span id="rel-btnA">Jogador A</span>
-</button>
+<div class="relogio-meio">
+<div id="relogio-sets-centro" class="relogio-sets-centro">
+<div class="relogio-linha-set"><span>4</span><span>2</span></div>
+<div class="relogio-linha-set"><span class="relogio-set-ganho">6</span><span>1</span></div>
+</div>
+</div>
 
-<button class="relogio-btn relogio-btn-b" onclick="pontuar('B')">
-+ <span id="rel-btnB">Jogador B</span>
-</button>
-
-<div class="relogio-acoes">
-<button class="relogio-acao" onclick="desfazer()">CORRIGIR</button>
-<button class="relogio-acao" onclick="voltarAoMenu()">SAIR</button>
+<div class="relogio-baixo">
+<div id="relogio-nomeB" class="relogio-nome-b">Pedro</div>
+<button id="relogio-pontoB" class="relogio-ponto-b" onclick="pontuar('B')">15</button>
+<button class="relogio-corrigir" onclick="desfazer()">Corrigir último ponto</button>
 </div>
 </div>
 
@@ -884,20 +913,40 @@ if (!tela) return;
 
 let p = obterPlacarTexto();
 
-document.getElementById("relogio-status").innerText = `MODO RELÓGIO • SALA ${salaId || "----"}`;
+let bolaA = jogo.sacadorAtual === "A" ? " 🎾" : "";
+let bolaB = jogo.sacadorAtual === "B" ? " 🎾" : "";
 
-let nomeSacador = jogo.sacadorAtual === "A" ? configs.nomeA : configs.nomeB;
-document.getElementById("relogio-sacador").innerText = `🎾 Sacando: ${nomeSacador}`;
+document.getElementById("relogio-nomeA").innerText = (configs.nomeA || "Jogador A") + bolaA;
+document.getElementById("relogio-nomeB").innerText = (configs.nomeB || "Jogador B") + bolaB;
 
-document.getElementById("rel-ptA").innerText = p.a;
-document.getElementById("rel-ptB").innerText = p.b;
-document.getElementById("rel-gamesA").innerText = jogo.gamesA || 0;
-document.getElementById("rel-gamesB").innerText = jogo.gamesB || 0;
-document.getElementById("rel-setsA").innerText = jogo.setsA || 0;
-document.getElementById("rel-setsB").innerText = jogo.setsB || 0;
+document.getElementById("relogio-pontoA").innerText = p.a;
+document.getElementById("relogio-pontoB").innerText = p.b;
 
-document.getElementById("rel-btnA").innerText = configs.nomeA || "Jogador A";
-document.getElementById("rel-btnB").innerText = configs.nomeB || "Jogador B";
+let tempo = "0:00:00";
+if (jogo.inicioPartida) {
+let agora = jogo.partidaEncerrada && jogo.tempoFinalPartida ? jogo.tempoFinalPartida : new Date().getTime();
+let ms = agora - jogo.inicioPartida;
+let totalSegundos = Math.floor(ms / 1000);
+let horas = Math.floor(totalSegundos / 3600);
+let minutos = Math.floor((totalSegundos % 3600) / 60);
+let segundos = totalSegundos % 60;
+tempo = horas + ":" + String(minutos).padStart(2, "0") + ":" + String(segundos).padStart(2, "0");
+}
+document.getElementById("relogio-tempo").innerText = tempo;
+
+let htmlSets = "";
+
+if (jogo.historicoSets && jogo.historicoSets.length > 0) {
+jogo.historicoSets.forEach(set => {
+let classeA = set.vencedor === "A" ? 'class="relogio-set-ganho"' : "";
+let classeB = set.vencedor === "B" ? 'class="relogio-set-ganho"' : "";
+htmlSets += `<div class="relogio-linha-set"><span ${classeA}>${set.a}</span><span ${classeB}>${set.b}</span></div>`;
+});
+}
+
+htmlSets += `<div class="relogio-linha-set"><span>${jogo.gamesA || 0}</span><span>${jogo.gamesB || 0}</span></div>`;
+
+document.getElementById("relogio-sets-centro").innerHTML = htmlSets;
 }
 
 function mostrarAvisoRelogio(texto) {
