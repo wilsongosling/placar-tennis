@@ -755,6 +755,7 @@ sacadorTieBreakInicial: "A",
 sacadorAtual: "A",
 ultimoAvisoTrocaLado: "",
 mostrarTrocaLado: false,
+avisoTrocaSaque: false,
 inicioPartida: null,
 tempoFinalPartida: null,
 historicoSets: [],
@@ -1744,6 +1745,7 @@ sacadorTieBreakInicial: configs.sacadorInicial,
 sacadorAtual: configs.sacadorInicial,
 ultimoAvisoTrocaLado: "",
 mostrarTrocaLado: false,
+avisoTrocaSaque: false,
 inicioPartida: null,
 tempoFinalPartida: null,
 historicoSets: [],
@@ -1861,6 +1863,7 @@ sacadorTieBreakInicial: jogo.sacadorTieBreakInicial || jogo.sacadorAtual,
 sacadorAtual: jogo.sacadorAtual,
 ultimoAvisoTrocaLado: jogo.ultimoAvisoTrocaLado,
 mostrarTrocaLado: jogo.mostrarTrocaLado,
+avisoTrocaSaque: jogo.avisoTrocaSaque || false,
 inicioPartida: jogo.inicioPartida,
 tempoFinalPartida: jogo.tempoFinalPartida,
 historicoSets: JSON.parse(JSON.stringify(jogo.historicoSets || [])),
@@ -1893,9 +1896,14 @@ registrarBreakPointConvertido(jogador);
 }
 
 if (jogo.emTieBreak) {
+let sacadorAntesTieBreak = jogo.sacadorAtual;
 if (jogador === 'A') jogo.pontosTbA++;
 else jogo.pontosTbB++;
 atualizarSacadorTieBreak();
+
+if (sacadorAntesTieBreak && jogo.sacadorAtual && sacadorAntesTieBreak !== jogo.sacadorAtual) {
+jogo.avisoTrocaSaque = true;
+}
 
 let tA = jogo.pontosTbA;
 let tB = jogo.pontosTbB;
@@ -2070,6 +2078,11 @@ textoFalar += " | Troca de lado.";
 jogo.mostrarTrocaLado = false;
 }
 
+if (jogo.avisoTrocaSaque) {
+textoFalar += " | Troca de saque. Sacando: " + nomeDoJogador(jogo.sacadorAtual) + ".";
+jogo.avisoTrocaSaque = false;
+}
+
 let avisoPonto = obterAvisoPontoImportante();
 if (avisoPonto) {
 mostrarAvisoGrande(avisoPonto);
@@ -2217,8 +2230,10 @@ iniciarEstatisticaGameAtual();
 
 function atualizarSacadorTieBreak() {
 if (!jogo.emTieBreak) return;
-if (configs.trocaSaque === "manual") return;
 
+// No tie-break a troca de saque sempre segue a regra do tie-break:
+// 1 ponto com o sacador inicial, depois blocos de 2 pontos alternando.
+// Isso não deve depender da configuração normal/manual de troca de saque do game.
 let inicial = jogo.sacadorTieBreakInicial || jogo.sacadorAtual || configs.sacadorInicial || "A";
 let outro = inicial === "A" ? "B" : "A";
 let pontosJogados = Number(jogo.pontosTbA || 0) + Number(jogo.pontosTbB || 0);
@@ -2243,7 +2258,12 @@ jogo.pontosA = 0;
 jogo.pontosB = 0;
 jogo.contadorDeuces = 0;
 
+let sacadorAntesDoGame = jogo.sacadorAtual;
 atualizarSacadorAutomatico();
+
+if (sacadorAntesDoGame && jogo.sacadorAtual && sacadorAntesDoGame !== jogo.sacadorAtual) {
+jogo.avisoTrocaSaque = true;
+}
 
 let avisoTrocaPorGame = deveTrocarLadoPorGame();
 
@@ -2317,9 +2337,19 @@ iniciarEstatisticaGameAtual();
 function colocarSet(jogador) {
 jogo.historicoSets = jogo.historicoSets || [];
 
+let placarSetA = Math.round(jogo.gamesA);
+let placarSetB = Math.round(jogo.gamesB);
+
+// Quando o set termina no tie-break, o placar do set precisa registrar
+// 7x6 (ou 9x8 no Pro Set), e não o empate que existia antes do tie-break.
+if (jogo.emTieBreak) {
+if (jogador === 'A') placarSetA++;
+else placarSetB++;
+}
+
 jogo.historicoSets.push({
-a: Math.round(jogo.gamesA),
-b: Math.round(jogo.gamesB),
+a: placarSetA,
+b: placarSetB,
 vencedor: jogador
 });
 
