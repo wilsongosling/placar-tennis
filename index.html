@@ -33,11 +33,6 @@ select, input { background: #222; color: #fff; border: 1px solid #444; padding: 
 #info-sala { position: absolute; top: 2px; left: 50%; transform: translateX(-50%); font-size: 10px; color: #00E0FF; font-weight: bold; z-index: 100; background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 4px; }
 #link-relogio { position: absolute; top: 22px; left: 50%; transform: translateX(-50%); font-size: 9px; color: #aaa; z-index: 100; background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 4px; max-width: 95vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-.btn-jogador { border: none; background: transparent; color: #fff; font-size: 44px; font-weight: bold; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; flex: 1; width: 100%; }
-.jogador-identidade { position: absolute; display: flex; flex-direction: column; align-items: center; gap: 2px; max-width: 90%; pointer-events: none; }
-.nome-jogador { font-size: 13px; color: #00FF66; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.bolinha-sacador { display: block; height: 18px; line-height: 18px; font-size: 16px; visibility: hidden; }
-.bolinha-sacador.ativo { visibility: visible; }
 #aviso-troca-lado {
 display: none;
 position: fixed;
@@ -46,16 +41,29 @@ top: 50%;
 transform: translate(-50%, -50%);
 background: #00FF66;
 color: #000;
-font-size: clamp(28px, 8vw, 76px);
+font-size: clamp(28px, 8vw, 72px);
 font-weight: 900;
 text-align: center;
 padding: 18px 28px;
 border-radius: 14px;
 z-index: 9999;
-box-shadow: 0 0 35px rgba(0,255,102,0.65);
+box-shadow: 0 0 30px rgba(0,255,102,0.65);
 white-space: nowrap;
 pointer-events: none;
 }
+
+.sacador-visual {
+position: absolute;
+font-size: 22px;
+line-height: 1;
+left: 50%;
+transform: translateX(-50%);
+z-index: 4;
+}
+
+
+.btn-jogador { border: none; background: transparent; color: #fff; font-size: 44px; font-weight: bold; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; flex: 1; width: 100%; }
+.nome-jogador { font-size: 13px; color: #00FF66; position: absolute; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; max-width: 90%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .painel-central { background: #111; display: flex; align-items: center; justify-content: space-between; padding: 10px; border: 2px solid #222; z-index: 10; }
 
@@ -142,6 +150,10 @@ text-align: center;
 }
 
 .relogio-nome-a {
+position: absolute;
+top: 9vh;
+left: 50%;
+transform: translateX(-50%);
 font-size: 7vh;
 line-height: 1;
 font-weight: 600;
@@ -152,6 +164,10 @@ text-overflow: ellipsis;
 }
 
 .relogio-nome-b {
+position: absolute;
+top: 9vh;
+left: 50%;
+transform: translateX(-50%);
 font-size: 7vh;
 line-height: 1;
 font-weight: 600;
@@ -161,29 +177,24 @@ overflow: hidden;
 text-overflow: ellipsis;
 }
 
-.relogio-identidade {
-position: absolute;
-top: 9vh;
-left: 50%;
-transform: translateX(-50%);
-display: flex;
-flex-direction: column;
-align-items: center;
-gap: 1vh;
-max-width: 36vw;
-pointer-events: none;
-}
-
 .relogio-bolinha {
 display: block;
-height: 5vh;
-line-height: 5vh;
 font-size: 5vh;
-visibility: hidden;
+line-height: 1;
+margin-top: 1.2vh;
+text-align: center;
 }
 
-.relogio-bolinha.ativo {
-visibility: visible;
+.relogio-sacador {
+position: absolute;
+top: 17vh;
+left: 50%;
+transform: translateX(-50%);
+font-size: 5vh;
+line-height: 1;
+height: 6vh;
+text-align: center;
+z-index: 3;
 }
 
 .relogio-ponto-a {
@@ -287,7 +298,7 @@ margin-bottom: 1vh;
 
 #relogio-aviso {
 display: none;
-position: fixed;
+position: absolute;
 left: 50%;
 top: 50%;
 transform: translate(-50%, -50%);
@@ -298,21 +309,16 @@ font-weight: 900;
 text-align: center;
 padding: 2vh 4vw;
 border-radius: 8px;
-z-index: 99999;
+z-index: 999;
 white-space: nowrap;
-pointer-events: none;
-box-shadow: 0 0 0 9999px rgba(0,0,0,0.25);
 }
 
 /* Apple Watch menor */
 @media (max-height: 190px) {
-.relogio-identidade {
-top: 8vh;
-}
-
 .relogio-nome-a,
 .relogio-nome-b {
 font-size: 5.5vh;
+top: 8vh;
 }
 
 .relogio-ponto-a,
@@ -353,8 +359,10 @@ font-size: 4vh;
 #tela-placar { flex-direction: column; }
 #btn-jogA { align-items: flex-start; padding-top: 25px; border-bottom: 1px dashed #333; }
 #btn-jogB { align-items: flex-end; padding-bottom: 25px; border-top: 1px dashed #333; }
-#btn-jogA .jogador-identidade { top: 8px; }
-#btn-jogB .jogador-identidade { bottom: 8px; }
+#btn-jogA .nome-jogador { top: 8px; }
+#btn-jogB .nome-jogador { bottom: 8px; }
+#btn-jogA .sacador-visual { top: 28px; }
+#btn-jogB .sacador-visual { bottom: 28px; }
 .painel-central { height: 16vh; width: 100vw; flex-direction: row; }
 .display-pontos { width: 30%; }
 .btn-acao-painel { width: 22%; height: 80%; }
@@ -365,8 +373,8 @@ font-size: 4vh;
 #btn-jogA { border-right: 1px dashed #333; order: 1; }
 .painel-central { width: 28vw; height: 100vh; flex-direction: column; justify-content: space-around; order: 2; border-left: 2px solid #222; border-right: 2px solid #222; padding: 20px 10px; }
 #btn-jogB { border-left: 1px dashed #333; order: 3; }
-.jogador-identidade { top: 15px !important; bottom: auto !important; }
-.nome-jogador { font-size: 16px; }
+.nome-jogador { top: 15px !important; bottom: auto !important; font-size: 16px; }
+.sacador-visual { top: 42px !important; bottom: auto !important; }
 .btn-jogador { font-size: 70px; }
 .display-pontos { width: 100%; }
 .display-sets { border-left: none; border-right: none; border-top: 1px solid #333; border-bottom: 1px solid #333; width: 100%; padding: 15px 0; margin: 15px 0; }
@@ -554,7 +562,8 @@ Tênis tradicional: 6 games, melhor de 3 sets, com vantagem e tie-break em 6x6.
 <div id="link-relogio">Link relógio: ----</div>
 
 <button id="btn-jogA" class="btn-jogador" onclick="pontuar('A')">
-<span class="jogador-identidade"><span class="nome-jogador" id="label-nomeA">JOGADOR A</span><span class="bolinha-sacador" id="bola-sacadorA">🎾</span></span>
+<span class="nome-jogador" id="label-nomeA">JOGADOR A</span>
+<span class="sacador-visual" id="sacadorA"></span>
 <span id="pontosA">0</span>
 </button>
 
@@ -584,7 +593,8 @@ Tênis tradicional: 6 games, melhor de 3 sets, com vantagem e tie-break em 6x6.
 </div>
 
 <button id="btn-jogB" class="btn-jogador" onclick="pontuar('B')">
-<span class="jogador-identidade"><span class="nome-jogador" id="label-nomeB">JOGADOR B</span><span class="bolinha-sacador" id="bola-sacadorB">🎾</span></span>
+<span class="nome-jogador" id="label-nomeB">JOGADOR B</span>
+<span class="sacador-visual" id="sacadorB"></span>
 <span id="pontosB">0</span>
 </button>
 </div>
@@ -593,7 +603,8 @@ Tênis tradicional: 6 games, melhor de 3 sets, com vantagem e tie-break em 6x6.
 <div id="relogio-aviso">TROCA DE LADO</div>
 
 <button class="relogio-coluna-esquerda" onclick="pontuar('A')">
-<div class="relogio-identidade"><div id="relogio-nomeA" class="relogio-nome-a">João</div><div id="relogio-bolaA" class="relogio-bolinha">🎾</div></div>
+<div id="relogio-nomeA" class="relogio-nome-a">João</div>
+<div id="relogio-sacadorA" class="relogio-sacador">🎾</div>
 <div id="relogio-pontoA" class="relogio-ponto-a">40</div>
 </button>
 
@@ -615,7 +626,8 @@ Corrigir
 </div>
 
 <button class="relogio-coluna-direita" onclick="pontuar('B')">
-<div class="relogio-identidade"><div id="relogio-nomeB" class="relogio-nome-b">Pedro</div><div id="relogio-bolaB" class="relogio-bolinha">🎾</div></div>
+<div id="relogio-nomeB" class="relogio-nome-b">Pedro</div>
+<div id="relogio-sacadorB" class="relogio-sacador"></div>
 <div id="relogio-pontoB" class="relogio-ponto-b">15</div>
 </button>
 </div>
@@ -638,7 +650,7 @@ let salaId = null;
 let ehRelogio = false;
 let ultimoPlacarFalado = "";
 let ultimoComandoRelogio = null;
-let ultimoAvisoVisualId = null;
+let ultimoAvisoVisualRelogio = null;
 let intervaloCronometro = null;
 
 let configs = {
@@ -751,6 +763,13 @@ function apagarPartidaSalva() {
 if (confirm("Apagar a partida salva neste aparelho?")) {
 localStorage.removeItem("placarPro_partidaAtual");
 mostrarBotaoContinuarSeExistir();
+try {
+const paramsTeste = new URLSearchParams(window.location.search);
+if (paramsTeste.get("teste") === "aviso") {
+executarTesteAvisoRelogio();
+return;
+}
+} catch(e) {}
 verificarEntradaPorLink();
 }
 }
@@ -1069,10 +1088,10 @@ let p = obterPlacarTexto();
 document.getElementById("relogio-nomeA").innerText = (configs.nomeA || "Jogador A");
 document.getElementById("relogio-nomeB").innerText = (configs.nomeB || "Jogador B");
 
-let relogioBolaA = document.getElementById("relogio-bolaA");
-let relogioBolaB = document.getElementById("relogio-bolaB");
-if (relogioBolaA) relogioBolaA.classList.toggle("ativo", jogo.sacadorAtual === "A");
-if (relogioBolaB) relogioBolaB.classList.toggle("ativo", jogo.sacadorAtual === "B");
+let sacadorA = document.getElementById("relogio-sacadorA");
+let sacadorB = document.getElementById("relogio-sacadorB");
+if (sacadorA) sacadorA.innerText = jogo.sacadorAtual === "A" ? "🎾" : "";
+if (sacadorB) sacadorB.innerText = jogo.sacadorAtual === "B" ? "🎾" : "";
 
 document.getElementById("relogio-pontoA").innerText = p.a;
 document.getElementById("relogio-pontoB").innerText = p.b;
@@ -1116,14 +1135,20 @@ aviso.style.display = "none";
 }, 3000);
 }
 
-function mostrarAvisoVisualSincronizado(texto) {
-if (!texto) return;
-
-if (ehRelogio || document.getElementById("modo-relogio-leve").style.display === "flex") {
-mostrarAvisoRelogio(texto);
-} else {
-mostrarAvisoGrande(texto);
+function detectarAvisoVisual(texto) {
+if (!texto) return "";
+if (texto.includes("Troca de lado")) return "TROCA DE LADO";
+let matchPoint = texto.match(/MATCH POINT[^.|]*/);
+if (matchPoint) return matchPoint[0].trim();
+let setPoint = texto.match(/SET POINT[^.|]*/);
+if (setPoint) return setPoint[0].trim();
+return "";
 }
+
+function mostrarAvisoVisualEmTodasAsTelas(texto) {
+if (!texto) return;
+mostrarAvisoGrande(texto);
+mostrarAvisoRelogio(texto);
 }
 
 function enviarComandoRelogio(tipo, jogador = "") {
@@ -1160,36 +1185,26 @@ desfazer();
 });
 }
 
-function criarAvisoVisual(textoLocucao = "") {
-let texto = textoLocucao || "";
-
-if (texto.includes("Troca de lado")) return "TROCA DE LADO";
-if (texto.includes("MATCH POINT")) return "MATCH POINT";
-if (texto.includes("SET POINT")) return "SET POINT";
-
-return "";
-}
-
 function enviarDadosFirebase(textoLocucao = "") {
 salvarPartidaLocal();
 
 if (!salaId) return;
 
-let avisoTexto = criarAvisoVisual(textoLocucao);
-let pacote = {
+let dadosAtualizacao = {
 configs: configs,
 jogo: jogo,
 textoLocucao: textoLocucao
 };
 
-if (avisoTexto) {
-pacote.avisoVisual = {
+let avisoVisual = detectarAvisoVisual(textoLocucao);
+if (avisoVisual) {
+dadosAtualizacao.avisoVisual = {
 id: Date.now().toString() + Math.floor(Math.random() * 9999).toString(),
-texto: avisoTexto
+texto: avisoVisual
 };
 }
 
-database.ref('salas/' + salaId).update(pacote);
+database.ref('salas/' + salaId).update(dadosAtualizacao);
 }
 
 function desligarEscutador() {
@@ -1210,17 +1225,18 @@ jogo = dados.jogo;
 atualizarTelaVisual();
 if (document.getElementById("tela-placar").style.display === "flex") iniciarCronometroVisual();
 
-if (dados.avisoVisual && dados.avisoVisual.id && dados.avisoVisual.id !== ultimoAvisoVisualId) {
-ultimoAvisoVisualId = dados.avisoVisual.id;
-mostrarAvisoVisualSincronizado(dados.avisoVisual.texto);
+if (dados.avisoVisual && dados.avisoVisual.id && dados.avisoVisual.id !== ultimoAvisoVisualRelogio) {
+ultimoAvisoVisualRelogio = dados.avisoVisual.id;
+mostrarAvisoVisualEmTodasAsTelas(dados.avisoVisual.texto || "AVISO");
 }
 
 if (dados.textoLocucao && dados.textoLocucao !== ultimoPlacarFalado) {
 ultimoPlacarFalado = dados.textoLocucao;
 
+/* Segurança para partidas/salas antigas que ainda não tenham o campo avisoVisual. */
 if (!dados.avisoVisual) {
-let avisoTexto = criarAvisoVisual(ultimoPlacarFalado);
-if (avisoTexto) mostrarAvisoVisualSincronizado(avisoTexto);
+let avisoAntigo = detectarAvisoVisual(ultimoPlacarFalado);
+if (avisoAntigo) mostrarAvisoVisualEmTodasAsTelas(avisoAntigo);
 }
 
 falarPlacar(ultimoPlacarFalado);
@@ -1665,7 +1681,7 @@ enviarDadosFirebase(`Sacador alterado. | Sacando: ${nomeDoJogador(jogo.sacadorAt
 
 
 function mostrarAvisoTrocaLado() {
-mostrarAvisoVisualSincronizado("TROCA DE LADO");
+mostrarAvisoVisualEmTodasAsTelas("TROCA DE LADO");
 }
 
 function deveTrocarLadoPorGame() {
@@ -1853,10 +1869,10 @@ linkRelogio.innerText = window.location.origin + window.location.pathname + "?sa
 document.getElementById("label-nomeA").innerText = configs.nomeA;
 document.getElementById("label-nomeB").innerText = configs.nomeB;
 
-let bolaSacadorA = document.getElementById("bola-sacadorA");
-let bolaSacadorB = document.getElementById("bola-sacadorB");
-if (bolaSacadorA) bolaSacadorA.classList.toggle("ativo", jogo.sacadorAtual === "A");
-if (bolaSacadorB) bolaSacadorB.classList.toggle("ativo", jogo.sacadorAtual === "B");
+let sacadorVisualA = document.getElementById("sacadorA");
+let sacadorVisualB = document.getElementById("sacadorB");
+if (sacadorVisualA) sacadorVisualA.innerText = jogo.sacadorAtual === "A" ? "🎾" : "";
+if (sacadorVisualB) sacadorVisualB.innerText = jogo.sacadorAtual === "B" ? "🎾" : "";
 
 document.getElementById("pontosA").innerText = p.a;
 document.getElementById("pontosB").innerText = p.b;
@@ -1885,10 +1901,28 @@ atualizarTelaRelogioLeve();
 atualizarCronometro();
 }
 
+
+function executarTesteAvisoRelogio() {
+configs.nomeA = "JOGADOR A";
+configs.nomeB = "JOGADOR B";
+jogo.sacadorAtual = "A";
+jogo.inicioPartida = new Date().getTime();
+mostrarTelaRelogioLeve();
+atualizarTelaRelogioLeve();
+mostrarAvisoRelogio("TROCA DE LADO");
+}
+
 window.onload = function() {
 aplicarPreset();
 atualizarTextosDinamicos();
 mostrarBotaoContinuarSeExistir();
+try {
+const paramsTeste = new URLSearchParams(window.location.search);
+if (paramsTeste.get("teste") === "aviso") {
+executarTesteAvisoRelogio();
+return;
+}
+} catch(e) {}
 verificarEntradaPorLink();
 
 setInterval(function() {
