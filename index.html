@@ -29,17 +29,35 @@ select, input { background: #222; color: #fff; border: 1px solid #444; padding: 
 .titulo-grupo { color: #00FF66; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.8px; }
 .resumo-modalidade { background: #111; color: #aaa; border: 1px solid #222; border-radius: 8px; padding: 10px; font-size: 12px; line-height: 1.4; }
 
-.historico-card { display: none; background: #0b0b0b; border: 1px solid #222; border-radius: 10px; padding: 12px; gap: 10px; flex-direction: column; }
-.historico-card.aberto { display: flex; }
+#tela-historico, #tela-detalhe-partida {
+display: none;
+min-height: 100vh;
+width: 100vw;
+background: #000;
+color: #fff;
+padding: 16px;
+overflow-y: auto;
+}
+.historico-container { max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
 .historico-topo { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.historico-titulo { color: #00FF66; font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.8px; }
-.historico-vazio { color: #777; font-size: 12px; line-height: 1.4; }
-.historico-item { background: #111; border: 1px solid #222; border-radius: 8px; padding: 10px; display: flex; flex-direction: column; gap: 6px; }
-.historico-linha-principal { color: #fff; font-size: 13px; font-weight: bold; }
+.historico-titulo { color: #00FF66; font-size: 18px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.8px; }
+.historico-subtitulo { color: #aaa; font-size: 12px; line-height: 1.4; }
+.historico-resumo { background: #0b0b0b; border: 1px solid #222; border-radius: 10px; padding: 12px; color: #aaa; font-size: 12px; line-height: 1.45; }
+.historico-vazio { color: #777; font-size: 13px; line-height: 1.4; background: #0b0b0b; border: 1px solid #222; border-radius: 10px; padding: 14px; }
+.historico-lista { display: flex; flex-direction: column; gap: 10px; }
+.historico-item { background: #111; border: 1px solid #222; border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 7px; cursor: pointer; }
+.historico-item:active { transform: scale(0.99); }
+.historico-linha-principal { color: #fff; font-size: 14px; font-weight: bold; }
 .historico-detalhes { color: #aaa; font-size: 12px; line-height: 1.35; }
+.historico-placar { color: #00FF66; font-size: 13px; font-weight: bold; }
 .btn-historico { background: #181818; color: #00FF66; border: 1px solid #333; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; }
-.btn-apagar-historico { background: #251010; color: #ff6666; border: 1px solid #552222; padding: 8px; border-radius: 7px; font-size: 12px; font-weight: bold; cursor: pointer; }
-.btn-apagar-partida { background: #222; color: #ff6666; border: 1px solid #444; padding: 7px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; align-self: flex-start; }
+.btn-voltar-historico { background: #181818; color: #00E0FF; border: 1px solid #333; padding: 10px 12px; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer; }
+.btn-apagar-historico { background: #251010; color: #ff6666; border: 1px solid #552222; padding: 10px 12px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; }
+.btn-apagar-partida { background: #251010; color: #ff6666; border: 1px solid #552222; padding: 11px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; width: 100%; }
+.detalhe-card { background: #0b0b0b; border: 1px solid #222; border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.detalhe-linha { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px solid #1d1d1d; padding-bottom: 8px; color: #aaa; font-size: 13px; }
+.detalhe-linha strong { color: #fff; }
+.detalhe-placeholder { color: #777; font-size: 12px; line-height: 1.4; border: 1px dashed #333; border-radius: 10px; padding: 12px; }
 
 #tela-placar { display: none; height: 100vh; width: 100vw; flex-direction: column; position: relative; }
 #info-sala { position: absolute; top: 2px; left: 50%; transform: translateX(-50%); font-size: 10px; color: #00E0FF; font-weight: bold; z-index: 100; background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 4px; }
@@ -558,16 +576,7 @@ Tênis tradicional: 6 games, melhor de 3 sets, com vantagem e tie-break em 6x6.
 
 <button class="btn-iniciar" onclick="iniciarJogo()">COMEÇAR JOGO</button>
 
-<button type="button" class="btn-historico" onclick="alternarHistoricoPartidas()">VER HISTÓRICO</button>
-
-<div id="historico-partidas" class="historico-card">
-<div class="historico-topo">
-<div class="historico-titulo">Histórico local</div>
-<button type="button" class="btn-apagar-historico" onclick="limparHistoricoPartidas()">LIMPAR TUDO</button>
-</div>
-<div id="lista-historico-partidas" class="historico-vazio">Nenhuma partida finalizada salva neste aparelho.</div>
-</div>
-
+<button type="button" class="btn-historico" onclick="abrirTelaHistorico()">VER HISTÓRICO</button>
 
 <div class="divisor">Ou controle pelo Watch</div>
 
@@ -577,6 +586,35 @@ Tênis tradicional: 6 games, melhor de 3 sets, com vantagem e tie-break em 6x6.
 </div>
 
 <button class="btn-conectar" onclick="conectarComoRelogio()">CONECTAR VIA RELÓGIO</button>
+</div>
+
+<div id="tela-historico">
+<div class="historico-container">
+<div class="historico-topo">
+<button type="button" class="btn-voltar-historico" onclick="voltarDoHistorico()">VOLTAR</button>
+<button type="button" class="btn-apagar-historico" onclick="limparHistoricoPartidas()">LIMPAR TUDO</button>
+</div>
+<div>
+<div class="historico-titulo">Histórico</div>
+<div class="historico-subtitulo">Partidas finalizadas salvas neste aparelho.</div>
+</div>
+<div id="resumo-historico-partidas" class="historico-resumo">Carregando histórico...</div>
+<div id="lista-historico-partidas" class="historico-lista"></div>
+</div>
+</div>
+
+<div id="tela-detalhe-partida">
+<div class="historico-container">
+<div class="historico-topo">
+<button type="button" class="btn-voltar-historico" onclick="abrirTelaHistorico()">VOLTAR</button>
+<button type="button" class="btn-apagar-historico" id="btn-apagar-detalhe" onclick="apagarPartidaDetalheAtual()">APAGAR</button>
+</div>
+<div>
+<div class="historico-titulo">Partida</div>
+<div class="historico-subtitulo">Detalhes da partida finalizada.</div>
+</div>
+<div id="detalhe-partida-conteudo" class="detalhe-card"></div>
+</div>
 </div>
 
 <div id="tela-placar">
@@ -782,11 +820,60 @@ console.warn("Não foi possível salvar a partida no histórico:", e);
 }
 }
 
-function alternarHistoricoPartidas() {
-let bloco = document.getElementById("historico-partidas");
-if (!bloco) return;
-bloco.classList.toggle("aberto");
+
+function esconderTelasPrincipais() {
+let telas = ["tela-config", "tela-placar", "modo-relogio-leve", "tela-historico", "tela-detalhe-partida"];
+telas.forEach(id => {
+let el = document.getElementById(id);
+if (el) el.style.display = "none";
+});
+}
+
+function abrirTelaHistorico() {
+esconderTelasPrincipais();
+let tela = document.getElementById("tela-historico");
+if (tela) tela.style.display = "block";
 renderizarHistoricoPartidas();
+}
+
+function voltarDoHistorico() {
+esconderTelasPrincipais();
+let tela = document.getElementById("tela-config");
+if (tela) tela.style.display = "flex";
+mostrarBotaoContinuarSeExistir();
+}
+
+function abrirDetalhePartida(id) {
+esconderTelasPrincipais();
+let tela = document.getElementById("tela-detalhe-partida");
+if (tela) tela.style.display = "block";
+renderizarDetalhePartida(id);
+}
+
+function textoSeguroHistorico(valor) {
+return String(valor == null ? "" : valor)
+.replace(/&/g, "&amp;")
+.replace(/</g, "&lt;")
+.replace(/>/g, "&gt;")
+.replace(/"/g, "&quot;")
+.replace(/'/g, "&#39;");
+}
+
+function placarFinalHistorico(partida) {
+if (!partida) return "";
+return `${partida.setsA || 0} x ${partida.setsB || 0}`;
+}
+
+function renderizarResumoHistorico(lista) {
+let el = document.getElementById("resumo-historico-partidas");
+if (!el) return;
+if (!lista.length) {
+el.innerHTML = "Nenhuma partida registrada ainda.";
+return;
+}
+let total = lista.length;
+let ultima = formatarDataHistorico(lista[0].data);
+el.innerHTML = `Total de partidas: <strong>${total}</strong><br>Última partida: <strong>${ultima}</strong>`;
 }
 
 function renderizarHistoricoPartidas() {
@@ -794,27 +881,63 @@ let el = document.getElementById("lista-historico-partidas");
 if (!el) return;
 
 let lista = obterHistoricoPartidas();
+renderizarResumoHistorico(lista);
+
 if (!lista.length) {
 el.className = "historico-vazio";
 el.innerHTML = "Nenhuma partida finalizada salva neste aparelho.";
 return;
 }
 
-el.className = "";
+el.className = "historico-lista";
 el.innerHTML = lista.map(partida => {
-let data = formatarDataHistorico(partida.data);
-let placarSets = placarSetsHistorico(partida);
-let vencedor = partida.vencedor || "Vencedor não registrado";
-let nomeA = partida.nomeA || "Jogador A";
-let nomeB = partida.nomeB || "Jogador B";
-let duracao = partida.duracao || "00:00:00";
+let data = textoSeguroHistorico(formatarDataHistorico(partida.data));
+let placarSets = textoSeguroHistorico(placarSetsHistorico(partida));
+let vencedor = textoSeguroHistorico(partida.vencedor || "Vencedor não registrado");
+let nomeA = textoSeguroHistorico(partida.nomeA || "Jogador A");
+let nomeB = textoSeguroHistorico(partida.nomeB || "Jogador B");
+let duracao = textoSeguroHistorico(partida.duracao || "00:00:00");
+let id = textoSeguroHistorico(partida.id);
 return `
-<div class="historico-item">
+<div class="historico-item" onclick="abrirDetalhePartida('${id}')">
 <div class="historico-linha-principal">${nomeA} x ${nomeB}</div>
+<div class="historico-placar">${placarFinalHistorico(partida)} sets</div>
 <div class="historico-detalhes">${data}<br>Vencedor: ${vencedor}<br>Sets: ${placarSets}<br>Duração: ${duracao}</div>
-<button type="button" class="btn-apagar-partida" onclick="apagarPartidaHistorico('${partida.id}')">APAGAR PARTIDA</button>
 </div>`;
 }).join("");
+}
+
+function renderizarDetalhePartida(id) {
+let el = document.getElementById("detalhe-partida-conteudo");
+if (!el) return;
+let partida = obterHistoricoPartidas().find(p => p.id === id);
+
+if (!partida) {
+el.innerHTML = `<div class="historico-vazio">Partida não encontrada.</div>`;
+return;
+}
+
+let botao = document.getElementById("btn-apagar-detalhe");
+if (botao) botao.setAttribute("data-partida-id", partida.id);
+
+let nomeA = textoSeguroHistorico(partida.nomeA || "Jogador A");
+let nomeB = textoSeguroHistorico(partida.nomeB || "Jogador B");
+let vencedor = textoSeguroHistorico(partida.vencedor || "Vencedor não registrado");
+let data = textoSeguroHistorico(formatarDataHistorico(partida.data));
+let duracao = textoSeguroHistorico(partida.duracao || "00:00:00");
+let modalidade = textoSeguroHistorico(partida.modalidade || "tenis");
+let sets = textoSeguroHistorico(placarSetsHistorico(partida));
+let placarFinal = textoSeguroHistorico(placarFinalHistorico(partida));
+
+el.innerHTML = `
+<div class="detalhe-linha"><span>Jogadores</span><strong>${nomeA} x ${nomeB}</strong></div>
+<div class="detalhe-linha"><span>Vencedor</span><strong>${vencedor}</strong></div>
+<div class="detalhe-linha"><span>Placar final</span><strong>${placarFinal} sets</strong></div>
+<div class="detalhe-linha"><span>Sets</span><strong>${sets}</strong></div>
+<div class="detalhe-linha"><span>Duração</span><strong>${duracao}</strong></div>
+<div class="detalhe-linha"><span>Data</span><strong>${data}</strong></div>
+<div class="detalhe-linha"><span>Modalidade</span><strong>${modalidade}</strong></div>
+<div class="detalhe-placeholder">Área reservada para estatísticas futuras: pontos totais, games, tie-breaks, sequência da partida e outros dados.</div>`;
 }
 
 function apagarPartidaHistorico(id) {
@@ -822,6 +945,16 @@ if (!confirm("Apagar esta partida do histórico?")) return;
 let lista = obterHistoricoPartidas().filter(partida => partida.id !== id);
 salvarHistoricoPartidas(lista);
 renderizarHistoricoPartidas();
+}
+
+function apagarPartidaDetalheAtual() {
+let botao = document.getElementById("btn-apagar-detalhe");
+let id = botao ? botao.getAttribute("data-partida-id") : "";
+if (!id) return;
+if (!confirm("Apagar esta partida do histórico?")) return;
+let lista = obterHistoricoPartidas().filter(partida => partida.id !== id);
+salvarHistoricoPartidas(lista);
+abrirTelaHistorico();
 }
 
 function limparHistoricoPartidas() {
