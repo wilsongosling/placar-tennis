@@ -59,6 +59,13 @@ overflow-y: auto;
 .detalhe-linha strong { color: #fff; }
 .detalhe-placeholder { color: #777; font-size: 12px; line-height: 1.4; border: 1px dashed #333; border-radius: 10px; padding: 12px; }
 
+.estatisticas-card { border: 1px solid #223322; background: #061006; border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.estatisticas-titulo { color: #00FF66; font-size: 13px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 2px; }
+.estatisticas-linha { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.09); padding-bottom: 7px; color: #aaa; font-size: 12.5px; }
+.estatisticas-linha:last-child { border-bottom: none; padding-bottom: 0; }
+.estatisticas-linha strong { color: #fff; text-align: right; }
+.estatisticas-observacao { color: #777; font-size: 11px; line-height: 1.35; margin-top: 2px; }
+
 #tela-placar { display: none; height: 100vh; width: 100vw; flex-direction: column; position: relative; }
 #info-sala { position: absolute; top: 2px; left: 50%; transform: translateX(-50%); font-size: 10px; color: #00E0FF; font-weight: bold; z-index: 100; background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 4px; }
 #link-relogio { position: absolute; top: 22px; left: 50%; transform: translateX(-50%); font-size: 9px; color: #aaa; z-index: 100; background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 4px; max-width: 95vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1050,16 +1057,19 @@ function renderizarBlocoEstatisticasPartida(partida) {
 let resumo = obterResumoEstatisticasPartida(partida);
 let gameLongo = resumo.gameMaisLongo;
 let gameDeuces = resumo.gameMaisDeuces;
-let textoLongo = gameLongo ? `${textoSeguroHistorico(textoGameEstatistica(gameLongo))} — ${textoSeguroHistorico(gameLongo.duracao || formatarDuracaoCurta(gameLongo.duracaoMs))}` : "Não registrado";
-let textoDeuces = gameDeuces && Number(gameDeuces.deuces || 0) > 0 ? `${textoSeguroHistorico(textoGameEstatistica(gameDeuces))} — ${Number(gameDeuces.deuces || 0)} deuce(s)` : "Nenhum deuce registrado";
+let temGamesRegistrados = resumo.totalGames > 0;
+let textoLongo = gameLongo ? `${textoSeguroHistorico(textoGameEstatistica(gameLongo))}<br>${textoSeguroHistorico(gameLongo.duracao || formatarDuracaoCurta(gameLongo.duracaoMs))}` : "Ainda não registrado";
+let textoDeuces = gameDeuces && Number(gameDeuces.deuces || 0) > 0 ? `${textoSeguroHistorico(textoGameEstatistica(gameDeuces))}<br>${Number(gameDeuces.deuces || 0)} deuce(s)` : "Nenhum deuce registrado";
+let observacao = temGamesRegistrados ? "" : `<div class="estatisticas-observacao">Observação: game mais longo e deuces só aparecem em partidas iniciadas depois desta versão.</div>`;
 return `
-<div class="detalhe-placeholder">
-<strong>Estatísticas da partida</strong><br><br>
-Games totais: <strong>${resumo.totalGames}</strong><br>
-Deuces totais: <strong>${resumo.totalDeuces}</strong><br>
-Tie-breaks: <strong>${resumo.tieBreaks}</strong><br><br>
-Game mais longo:<br><strong>${textoLongo}</strong><br><br>
-Game com mais deuces:<br><strong>${textoDeuces}</strong>
+<div class="estatisticas-card">
+<div class="estatisticas-titulo">Estatísticas</div>
+<div class="estatisticas-linha"><span>Games totais</span><strong>${resumo.totalGames}</strong></div>
+<div class="estatisticas-linha"><span>Deuces totais</span><strong>${resumo.totalDeuces}</strong></div>
+<div class="estatisticas-linha"><span>Tie-breaks</span><strong>${resumo.tieBreaks}</strong></div>
+<div class="estatisticas-linha"><span>Game mais longo</span><strong>${textoLongo}</strong></div>
+<div class="estatisticas-linha"><span>Game com mais deuces</span><strong>${textoDeuces}</strong></div>
+${observacao}
 </div>`;
 }
 
