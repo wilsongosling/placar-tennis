@@ -763,6 +763,10 @@ estatisticas: {
   games: [],
   totalDeuces: 0,
   tieBreaks: 0,
+  breakPoints: {
+    A: { chances: 0, convertidos: 0 },
+    B: { chances: 0, convertidos: 0 }
+  },
   gameAtual: null
 },
 historico: []
@@ -898,11 +902,17 @@ if (!jogo.estatisticas) jogo.estatisticas = {};
 if (!Array.isArray(jogo.estatisticas.games)) jogo.estatisticas.games = [];
 if (typeof jogo.estatisticas.totalDeuces !== "number") jogo.estatisticas.totalDeuces = 0;
 if (typeof jogo.estatisticas.tieBreaks !== "number") jogo.estatisticas.tieBreaks = 0;
+if (!jogo.estatisticas.breakPoints) jogo.estatisticas.breakPoints = {};
+["A", "B"].forEach(j => {
+if (!jogo.estatisticas.breakPoints[j]) jogo.estatisticas.breakPoints[j] = {};
+if (typeof jogo.estatisticas.breakPoints[j].chances !== "number") jogo.estatisticas.breakPoints[j].chances = 0;
+if (typeof jogo.estatisticas.breakPoints[j].convertidos !== "number") jogo.estatisticas.breakPoints[j].convertidos = 0;
+});
 if (!jogo.estatisticas.gameAtual) iniciarEstatisticaGameAtual();
 }
 
 function iniciarEstatisticaGameAtual() {
-if (!jogo.estatisticas) jogo.estatisticas = { games: [], totalDeuces: 0, tieBreaks: 0, gameAtual: null };
+if (!jogo.estatisticas) jogo.estatisticas = { games: [], totalDeuces: 0, tieBreaks: 0, breakPoints: { A: { chances: 0, convertidos: 0 }, B: { chances: 0, convertidos: 0 } }, gameAtual: null };
 if (!Array.isArray(jogo.estatisticas.games)) jogo.estatisticas.games = [];
 let setNumero = (jogo.historicoSets ? jogo.historicoSets.length : 0) + 1;
 let gameNumero = (Number(jogo.gamesA || 0) + Number(jogo.gamesB || 0)) + 1;
@@ -928,6 +938,32 @@ function registrarDeuceEstatistica() {
 garantirEstruturaEstatisticas();
 jogo.estatisticas.gameAtual.deuces = Number(jogo.estatisticas.gameAtual.deuces || 0) + 1;
 jogo.estatisticas.totalDeuces = Number(jogo.estatisticas.totalDeuces || 0) + 1;
+}
+
+function obterBreakPointAntesDoPonto() {
+if (jogo.partidaEncerrada || jogo.emTieBreak) return { existe: false, recebedor: "" };
+let sacador = jogo.sacadorAtual || configs.sacadorInicial || "A";
+let recebedor = sacador === "A" ? "B" : "A";
+
+// Regra combinada com o usuário:
+// existe break point quando o recebedor ganharia o game se vencer o próximo ponto.
+if (jogadorGanhariaGame(recebedor)) {
+return { existe: true, recebedor: recebedor };
+}
+
+return { existe: false, recebedor: "" };
+}
+
+function registrarBreakPointChance(jogador) {
+garantirEstruturaEstatisticas();
+if (!jogo.estatisticas.breakPoints[jogador]) jogo.estatisticas.breakPoints[jogador] = { chances: 0, convertidos: 0 };
+jogo.estatisticas.breakPoints[jogador].chances = Number(jogo.estatisticas.breakPoints[jogador].chances || 0) + 1;
+}
+
+function registrarBreakPointConvertido(jogador) {
+garantirEstruturaEstatisticas();
+if (!jogo.estatisticas.breakPoints[jogador]) jogo.estatisticas.breakPoints[jogador] = { chances: 0, convertidos: 0 };
+jogo.estatisticas.breakPoints[jogador].convertidos = Number(jogo.estatisticas.breakPoints[jogador].convertidos || 0) + 1;
 }
 
 function finalizarEstatisticaGame(vencedor, ehTieBreak) {
@@ -959,6 +995,9 @@ let games = Array.isArray(stats.games) ? stats.games : [];
 let totalGames = games.length;
 let totalDeuces = Number(stats.totalDeuces || 0);
 let tieBreaks = Number(stats.tieBreaks || 0);
+let breakPoints = stats.breakPoints || {};
+let breakPointsA = breakPoints.A || { chances: 0, convertidos: 0 };
+let breakPointsB = breakPoints.B || { chances: 0, convertidos: 0 };
 let gameMaisLongo = null;
 let gameMaisDeuces = null;
 
@@ -967,7 +1006,7 @@ if (!gameMaisLongo || Number(g.duracaoMs || 0) > Number(gameMaisLongo.duracaoMs 
 if (!gameMaisDeuces || Number(g.deuces || 0) > Number(gameMaisDeuces.deuces || 0)) gameMaisDeuces = g;
 });
 
-return { totalGames, totalDeuces, tieBreaks, gameMaisLongo, gameMaisDeuces };
+return { totalGames, totalDeuces, tieBreaks, gameMaisLongo, gameMaisDeuces, breakPointsA, breakPointsB };
 }
 
 function textoGameEstatistica(game) {
@@ -1067,6 +1106,8 @@ return `
 <div class="estatisticas-linha"><span>Games totais</span><strong>${resumo.totalGames}</strong></div>
 <div class="estatisticas-linha"><span>Deuces totais</span><strong>${resumo.totalDeuces}</strong></div>
 <div class="estatisticas-linha"><span>Tie-breaks</span><strong>${resumo.tieBreaks}</strong></div>
+<div class="estatisticas-linha"><span>Break Points ${textoSeguroHistorico(partida.nomeA || "Jogador A")}</span><strong>${Number(resumo.breakPointsA.convertidos || 0)} / ${Number(resumo.breakPointsA.chances || 0)}</strong></div>
+<div class="estatisticas-linha"><span>Break Points ${textoSeguroHistorico(partida.nomeB || "Jogador B")}</span><strong>${Number(resumo.breakPointsB.convertidos || 0)} / ${Number(resumo.breakPointsB.chances || 0)}</strong></div>
 <div class="estatisticas-linha"><span>Game mais longo</span><strong>${textoLongo}</strong></div>
 <div class="estatisticas-linha"><span>Game com mais deuces</span><strong>${textoDeuces}</strong></div>
 ${observacao}
@@ -1710,6 +1751,10 @@ estatisticas: {
   games: [],
   totalDeuces: 0,
   tieBreaks: 0,
+  breakPoints: {
+    A: { chances: 0, convertidos: 0 },
+    B: { chances: 0, convertidos: 0 }
+  },
   gameAtual: null
 },
 historico: []
@@ -1835,6 +1880,14 @@ if (jogo.partidaEncerrada) return;
 
 salvarHistorico();
 registrarPontoEstatistica();
+
+let breakPointAntesDoPonto = obterBreakPointAntesDoPonto();
+if (breakPointAntesDoPonto.existe) {
+registrarBreakPointChance(breakPointAntesDoPonto.recebedor);
+if (jogador === breakPointAntesDoPonto.recebedor && jogadorGanhariaGame(jogador)) {
+registrarBreakPointConvertido(jogador);
+}
+}
 
 if (jogo.emTieBreak) {
 if (jogador === 'A') jogo.pontosTbA++;
