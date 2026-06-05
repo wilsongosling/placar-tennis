@@ -777,7 +777,9 @@ lista = lista.slice(0, 50);
 salvarHistoricoPartidas(lista);
 jogo.historicoSalvo = true;
 renderizarHistoricoPartidas();
-} catch(e) {}
+} catch(e) {
+console.warn("Não foi possível salvar a partida no histórico:", e);
+}
 }
 
 function alternarHistoricoPartidas() {
@@ -1506,6 +1508,8 @@ alert("Sala não encontrada!");
 
 function voltarAoMenu() {
 if (confirm("Deseja voltar ao menu? Isso limpará a sala atual.")) {
+// Garantia: se a partida já terminou, salva no histórico ANTES de limpar a sala.
+salvarPartidaEncerradaNoHistorico();
 if ('speechSynthesis' in window) window.speechSynthesis.cancel();
 pararCronometroVisual();
 desligarEscutador();
@@ -1734,6 +1738,9 @@ if (avisoPonto) {
 mostrarAvisoGrande(avisoPonto);
 textoFalar += " | " + avisoPonto + ".";
 }
+
+// Garantia principal: quando a partida acaba, registra no histórico imediatamente.
+salvarPartidaEncerradaNoHistorico();
 
 enviarDadosFirebase(textoFalar);
 }
