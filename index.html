@@ -29,28 +29,21 @@ select, input { background: #222; color: #fff; border: 1px solid #444; padding: 
 .titulo-grupo { color: #00FF66; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.8px; }
 .resumo-modalidade { background: #111; color: #aaa; border: 1px solid #222; border-radius: 8px; padding: 10px; font-size: 12px; line-height: 1.4; }
 
+.historico-card { display: none; background: #0b0b0b; border: 1px solid #222; border-radius: 10px; padding: 12px; gap: 10px; flex-direction: column; }
+.historico-card.aberto { display: flex; }
+.historico-topo { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.historico-titulo { color: #00FF66; font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.8px; }
+.historico-vazio { color: #777; font-size: 12px; line-height: 1.4; }
+.historico-item { background: #111; border: 1px solid #222; border-radius: 8px; padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+.historico-linha-principal { color: #fff; font-size: 13px; font-weight: bold; }
+.historico-detalhes { color: #aaa; font-size: 12px; line-height: 1.35; }
+.btn-historico { background: #181818; color: #00FF66; border: 1px solid #333; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; }
+.btn-apagar-historico { background: #251010; color: #ff6666; border: 1px solid #552222; padding: 8px; border-radius: 7px; font-size: 12px; font-weight: bold; cursor: pointer; }
+.btn-apagar-partida { background: #222; color: #ff6666; border: 1px solid #444; padding: 7px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; align-self: flex-start; }
+
 #tela-placar { display: none; height: 100vh; width: 100vw; flex-direction: column; position: relative; }
 #info-sala { position: absolute; top: 2px; left: 50%; transform: translateX(-50%); font-size: 10px; color: #00E0FF; font-weight: bold; z-index: 100; background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 4px; }
 #link-relogio { position: absolute; top: 22px; left: 50%; transform: translateX(-50%); font-size: 9px; color: #aaa; z-index: 100; background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 4px; max-width: 95vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-.status-conexao {
-position: absolute;
-top: 42px;
-left: 50%;
-transform: translateX(-50%);
-z-index: 100;
-font-size: 9px;
-font-weight: bold;
-letter-spacing: 0.5px;
-background: rgba(0,0,0,0.65);
-color: #FFA500;
-padding: 2px 7px;
-border-radius: 999px;
-white-space: nowrap;
-}
-.status-conexao.ok { color: #00FF66; }
-.status-conexao.off { color: #ff4444; }
-.status-conexao.reconectando { color: #FFA500; }
 
 #aviso-troca-lado {
 display: none;
@@ -332,26 +325,6 @@ z-index: 999;
 white-space: nowrap;
 }
 
-#relogio-status-conexao {
-position: absolute;
-top: 2vh;
-left: 50%;
-transform: translateX(-50%);
-z-index: 1000;
-font-size: 3.2vh;
-font-weight: 800;
-letter-spacing: 0.4px;
-background: rgba(0,0,0,0.65);
-color: #FFA500;
-padding: 0.8vh 2.2vw;
-border-radius: 999px;
-white-space: nowrap;
-pointer-events: none;
-}
-#relogio-status-conexao.ok { color: #00FF66; }
-#relogio-status-conexao.off { color: #ff4444; }
-#relogio-status-conexao.reconectando { color: #FFA500; }
-
 /* Apple Watch menor */
 @media (max-height: 190px) {
 .relogio-nome-a,
@@ -585,6 +558,17 @@ Tênis tradicional: 6 games, melhor de 3 sets, com vantagem e tie-break em 6x6.
 
 <button class="btn-iniciar" onclick="iniciarJogo()">COMEÇAR JOGO</button>
 
+<button type="button" class="btn-historico" onclick="alternarHistoricoPartidas()">VER HISTÓRICO</button>
+
+<div id="historico-partidas" class="historico-card">
+<div class="historico-topo">
+<div class="historico-titulo">Histórico local</div>
+<button type="button" class="btn-apagar-historico" onclick="limparHistoricoPartidas()">LIMPAR TUDO</button>
+</div>
+<div id="lista-historico-partidas" class="historico-vazio">Nenhuma partida finalizada salva neste aparelho.</div>
+</div>
+
+
 <div class="divisor">Ou controle pelo Watch</div>
 
 <div class="campo">
@@ -599,7 +583,6 @@ Tênis tradicional: 6 games, melhor de 3 sets, com vantagem e tie-break em 6x6.
 <div id="aviso-troca-lado">TROCA DE LADO</div>
 <div id="info-sala">SALA: ----</div>
 <div id="link-relogio">Link relógio: ----</div>
-<div id="status-conexao" class="status-conexao reconectando">CONECTANDO...</div>
 
 <button id="btn-jogA" class="btn-jogador" onclick="pontuar('A')">
 <span class="nome-jogador" id="label-nomeA">JOGADOR A</span>
@@ -641,7 +624,6 @@ Tênis tradicional: 6 games, melhor de 3 sets, com vantagem e tie-break em 6x6.
 
 <div id="modo-relogio-leve">
 <div id="relogio-aviso">TROCA DE LADO</div>
-<div id="relogio-status-conexao" class="relogio-status-conexao reconectando">CONECTANDO...</div>
 
 <button class="relogio-coluna-esquerda" onclick="pontuar('A')">
 <div id="relogio-nomeA" class="relogio-nome-a">João</div>
@@ -693,10 +675,6 @@ let ultimoPlacarFalado = "";
 let ultimoComandoRelogio = null;
 let ultimoAvisoVisualRelogio = null;
 let intervaloCronometro = null;
-let firebaseEscutandoSala = false;
-let monitorConexaoAtivo = false;
-let ultimaConexaoOk = null;
-let escutandoComandosRelogio = false;
 
 let configs = {
 nomeA: "Jogador A",
@@ -735,10 +713,120 @@ inicioPartida: null,
 tempoFinalPartida: null,
 historicoSets: [],
 partidaEncerrada: false,
+historicoSalvo: false,
 historico: []
 };
 
 const nomesPontos = { 0: "0", 1: "15", 2: "30", 3: "40" };
+
+
+function obterHistoricoPartidas() {
+try {
+let dados = localStorage.getItem("placarPro_historicoPartidas");
+let lista = dados ? JSON.parse(dados) : [];
+return Array.isArray(lista) ? lista : [];
+} catch(e) {
+return [];
+}
+}
+
+function salvarHistoricoPartidas(lista) {
+try {
+localStorage.setItem("placarPro_historicoPartidas", JSON.stringify(lista || []));
+} catch(e) {}
+}
+
+function formatarDataHistorico(timestamp) {
+try {
+let data = new Date(timestamp);
+return data.toLocaleDateString("pt-BR") + " " + data.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+} catch(e) {
+return "Data indisponível";
+}
+}
+
+function placarSetsHistorico(partida) {
+if (!partida || !partida.sets || partida.sets.length === 0) return "Sem sets registrados";
+return partida.sets.map(set => `${set.a}x${set.b}`).join(" | ");
+}
+
+function salvarPartidaEncerradaNoHistorico() {
+try {
+if (!jogo.partidaEncerrada || jogo.historicoSalvo) return;
+
+let vencedor = jogo.setsA > jogo.setsB ? configs.nomeA : configs.nomeB;
+let inicio = jogo.inicioPartida || new Date().getTime();
+let fim = jogo.tempoFinalPartida || new Date().getTime();
+
+let partida = {
+id: Date.now().toString() + Math.floor(Math.random() * 9999).toString(),
+data: fim,
+nomeA: configs.nomeA,
+nomeB: configs.nomeB,
+vencedor: vencedor,
+setsA: jogo.setsA,
+setsB: jogo.setsB,
+sets: JSON.parse(JSON.stringify(jogo.historicoSets || [])),
+duracao: formatarTempo(fim - inicio),
+modalidade: configs.modalidade || "tenis"
+};
+
+let lista = obterHistoricoPartidas();
+lista.unshift(partida);
+lista = lista.slice(0, 50);
+salvarHistoricoPartidas(lista);
+jogo.historicoSalvo = true;
+renderizarHistoricoPartidas();
+} catch(e) {}
+}
+
+function alternarHistoricoPartidas() {
+let bloco = document.getElementById("historico-partidas");
+if (!bloco) return;
+bloco.classList.toggle("aberto");
+renderizarHistoricoPartidas();
+}
+
+function renderizarHistoricoPartidas() {
+let el = document.getElementById("lista-historico-partidas");
+if (!el) return;
+
+let lista = obterHistoricoPartidas();
+if (!lista.length) {
+el.className = "historico-vazio";
+el.innerHTML = "Nenhuma partida finalizada salva neste aparelho.";
+return;
+}
+
+el.className = "";
+el.innerHTML = lista.map(partida => {
+let data = formatarDataHistorico(partida.data);
+let placarSets = placarSetsHistorico(partida);
+let vencedor = partida.vencedor || "Vencedor não registrado";
+let nomeA = partida.nomeA || "Jogador A";
+let nomeB = partida.nomeB || "Jogador B";
+let duracao = partida.duracao || "00:00:00";
+return `
+<div class="historico-item">
+<div class="historico-linha-principal">${nomeA} x ${nomeB}</div>
+<div class="historico-detalhes">${data}<br>Vencedor: ${vencedor}<br>Sets: ${placarSets}<br>Duração: ${duracao}</div>
+<button type="button" class="btn-apagar-partida" onclick="apagarPartidaHistorico('${partida.id}')">APAGAR PARTIDA</button>
+</div>`;
+}).join("");
+}
+
+function apagarPartidaHistorico(id) {
+if (!confirm("Apagar esta partida do histórico?")) return;
+let lista = obterHistoricoPartidas().filter(partida => partida.id !== id);
+salvarHistoricoPartidas(lista);
+renderizarHistoricoPartidas();
+}
+
+function limparHistoricoPartidas() {
+if (!confirm("Apagar todo o histórico salvo neste aparelho?")) return;
+salvarHistoricoPartidas([]);
+renderizarHistoricoPartidas();
+}
 
 function salvarPartidaLocal() {
 try {
@@ -787,7 +875,6 @@ ehRelogio = obj.ehRelogio || false;
 
 document.getElementById("tela-config").style.display = "none";
 document.getElementById("tela-placar").style.display = "flex";
-iniciarMonitorConexao();
 
 atualizarTelaVisual();
 atualizarTelaRelogioLeve();
@@ -809,6 +896,7 @@ function apagarPartidaSalva() {
 if (confirm("Apagar a partida salva neste aparelho?")) {
 localStorage.removeItem("placarPro_partidaAtual");
 mostrarBotaoContinuarSeExistir();
+renderizarHistoricoPartidas();
 try {
 const paramsTeste = new URLSearchParams(window.location.search);
 if (paramsTeste.get("teste") === "aviso") {
@@ -1197,61 +1285,6 @@ mostrarAvisoGrande(texto);
 mostrarAvisoRelogio(texto);
 }
 
-
-function atualizarStatusConexao(status) {
-let texto = "CONECTANDO...";
-let classe = "reconectando";
-
-if (status === "ok") {
-texto = "ONLINE";
-classe = "ok";
-}
-
-if (status === "off") {
-texto = "RECONECTANDO...";
-classe = "off";
-}
-
-let ids = ["status-conexao", "relogio-status-conexao"];
-ids.forEach(id => {
-let el = document.getElementById(id);
-if (!el) return;
-el.innerText = texto;
-el.className = id === "status-conexao" ? "status-conexao " + classe : classe;
-});
-}
-
-function iniciarMonitorConexao() {
-if (monitorConexaoAtivo) return;
-monitorConexaoAtivo = true;
-atualizarStatusConexao("reconectando");
-
-database.ref(".info/connected").on("value", (snapshot) => {
-let conectado = snapshot.val() === true;
-ultimaConexaoOk = conectado;
-
-if (conectado) {
-atualizarStatusConexao("ok");
-if (salaId) {
-escutarFirebase(true);
-if (!ehRelogio) escutarComandosRelogio();
-}
-} else {
-atualizarStatusConexao("off");
-firebaseEscutandoSala = false;
-escutandoComandosRelogio = false;
-}
-});
-}
-
-document.addEventListener("visibilitychange", function() {
-if (!document.hidden && salaId) {
-atualizarStatusConexao(ultimaConexaoOk ? "ok" : "reconectando");
-escutarFirebase(true);
-if (!ehRelogio) escutarComandosRelogio();
-}
-});
-
 function enviarComandoRelogio(tipo, jogador = "") {
 if (!salaId) return;
 
@@ -1268,10 +1301,7 @@ database.ref('salas/' + salaId + '/comandoRelogio').set(comando);
 
 function escutarComandosRelogio() {
 if (!salaId || ehRelogio) return;
-if (escutandoComandosRelogio) return;
-escutandoComandosRelogio = true;
 
-database.ref('salas/' + salaId + '/comandoRelogio').off('value');
 database.ref('salas/' + salaId + '/comandoRelogio').on('value', (snapshot) => {
 const comando = snapshot.val();
 if (!comando || !comando.id) return;
@@ -1314,18 +1344,11 @@ database.ref('salas/' + salaId).update(dadosAtualizacao);
 function desligarEscutador() {
 if (salaId) {
 database.ref('salas/' + salaId).off();
-database.ref('salas/' + salaId + '/comandoRelogio').off();
 }
-firebaseEscutandoSala = false;
 }
 
-function escutarFirebase(forcarReconexao = false) {
+function escutarFirebase() {
 if (!salaId) return;
-
-if (firebaseEscutandoSala && !forcarReconexao) return;
-
-database.ref('salas/' + salaId).off('value');
-firebaseEscutandoSala = true;
 
 database.ref('salas/' + salaId).on('value', (snapshot) => {
 const dados = snapshot.val();
@@ -1413,12 +1436,12 @@ inicioPartida: null,
 tempoFinalPartida: null,
 historicoSets: [],
 partidaEncerrada: false,
+historicoSalvo: false,
 historico: []
 };
 
 document.getElementById("tela-config").style.display = "none";
 document.getElementById("tela-placar").style.display = "flex";
-iniciarMonitorConexao();
 
 atualizarTelaVisual();
 iniciarCronometroVisual();
@@ -1436,33 +1459,13 @@ if (!codigoSala) return;
 
 salaId = codigoSala.toString().trim();
 ehRelogio = true;
-iniciarMonitorConexao();
-atualizarStatusConexao("reconectando");
-
-tentarEntrarNaSala(0);
-}
-
-function tentarEntrarNaSala(tentativa) {
-if (!salaId) return;
 
 database.ref('salas/' + salaId).once('value', (snapshot) => {
 if (snapshot.exists()) {
 mostrarTelaRelogioLeve();
-escutarFirebase(true);
-return;
-}
-
-if (tentativa < 8) {
-atualizarStatusConexao("reconectando");
-setTimeout(() => tentarEntrarNaSala(tentativa + 1), 1500);
+escutarFirebase();
 } else {
-atualizarStatusConexao("off");
 alert("Sala não encontrada!");
-}
-}).catch(() => {
-atualizarStatusConexao("off");
-if (tentativa < 8) {
-setTimeout(() => tentarEntrarNaSala(tentativa + 1), 1500);
 }
 });
 }
@@ -1490,9 +1493,15 @@ return;
 
 salaId = codigoDigitado;
 ehRelogio = true;
-iniciarMonitorConexao();
-atualizarStatusConexao("reconectando");
-tentarEntrarNaSala(0);
+
+database.ref('salas/' + salaId).once('value', (snapshot) => {
+if (snapshot.exists()) {
+mostrarTelaRelogioLeve();
+escutarFirebase();
+} else {
+alert("Sala não encontrada!");
+}
+});
 }
 
 function voltarAoMenu() {
@@ -1529,7 +1538,8 @@ mostrarTrocaLado: jogo.mostrarTrocaLado,
 inicioPartida: jogo.inicioPartida,
 tempoFinalPartida: jogo.tempoFinalPartida,
 historicoSets: JSON.parse(JSON.stringify(jogo.historicoSets || [])),
-partidaEncerrada: jogo.partidaEncerrada
+partidaEncerrada: jogo.partidaEncerrada,
+historicoSalvo: jogo.historicoSalvo || false
 };
 
 if (!jogo.historico) jogo.historico = [];
@@ -1953,6 +1963,7 @@ if (jogo.setsA === configs.setsParaVencer || jogo.setsB === configs.setsParaVenc
 jogo.partidaEncerrada = true;
 if (!jogo.tempoFinalPartida) jogo.tempoFinalPartida = new Date().getTime();
 pararCronometroVisual();
+salvarPartidaEncerradaNoHistorico();
 }
 }
 
@@ -2042,6 +2053,7 @@ window.onload = function() {
 aplicarPreset();
 atualizarTextosDinamicos();
 mostrarBotaoContinuarSeExistir();
+renderizarHistoricoPartidas();
 try {
 const paramsTeste = new URLSearchParams(window.location.search);
 if (paramsTeste.get("teste") === "aviso") {
