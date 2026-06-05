@@ -33,25 +33,6 @@ select, input { background: #222; color: #fff; border: 1px solid #444; padding: 
 #info-sala { position: absolute; top: 2px; left: 50%; transform: translateX(-50%); font-size: 10px; color: #00E0FF; font-weight: bold; z-index: 100; background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 4px; }
 #link-relogio { position: absolute; top: 22px; left: 50%; transform: translateX(-50%); font-size: 9px; color: #aaa; z-index: 100; background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 4px; max-width: 95vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-.status-conexao {
-position: absolute;
-top: 42px;
-left: 50%;
-transform: translateX(-50%);
-z-index: 100;
-font-size: 9px;
-font-weight: bold;
-letter-spacing: 0.5px;
-background: rgba(0,0,0,0.65);
-color: #FFA500;
-padding: 2px 7px;
-border-radius: 999px;
-white-space: nowrap;
-}
-.status-conexao.ok { color: #00FF66; }
-.status-conexao.off { color: #ff4444; }
-.status-conexao.reconectando { color: #FFA500; }
-
 #aviso-troca-lado {
 display: none;
 position: fixed;
@@ -332,26 +313,6 @@ z-index: 999;
 white-space: nowrap;
 }
 
-#relogio-status-conexao {
-position: absolute;
-top: 2vh;
-left: 50%;
-transform: translateX(-50%);
-z-index: 1000;
-font-size: 3.2vh;
-font-weight: 800;
-letter-spacing: 0.4px;
-background: rgba(0,0,0,0.65);
-color: #FFA500;
-padding: 0.8vh 2.2vw;
-border-radius: 999px;
-white-space: nowrap;
-pointer-events: none;
-}
-#relogio-status-conexao.ok { color: #00FF66; }
-#relogio-status-conexao.off { color: #ff4444; }
-#relogio-status-conexao.reconectando { color: #FFA500; }
-
 /* Apple Watch menor */
 @media (max-height: 190px) {
 .relogio-nome-a,
@@ -599,7 +560,6 @@ Tênis tradicional: 6 games, melhor de 3 sets, com vantagem e tie-break em 6x6.
 <div id="aviso-troca-lado">TROCA DE LADO</div>
 <div id="info-sala">SALA: ----</div>
 <div id="link-relogio">Link relógio: ----</div>
-<div id="status-conexao" class="status-conexao reconectando">CONECTANDO...</div>
 
 <button id="btn-jogA" class="btn-jogador" onclick="pontuar('A')">
 <span class="nome-jogador" id="label-nomeA">JOGADOR A</span>
@@ -641,7 +601,6 @@ Tênis tradicional: 6 games, melhor de 3 sets, com vantagem e tie-break em 6x6.
 
 <div id="modo-relogio-leve">
 <div id="relogio-aviso">TROCA DE LADO</div>
-<div id="relogio-status-conexao" class="relogio-status-conexao reconectando">CONECTANDO...</div>
 
 <button class="relogio-coluna-esquerda" onclick="pontuar('A')">
 <div id="relogio-nomeA" class="relogio-nome-a">João</div>
@@ -693,10 +652,6 @@ let ultimoPlacarFalado = "";
 let ultimoComandoRelogio = null;
 let ultimoAvisoVisualRelogio = null;
 let intervaloCronometro = null;
-let firebaseEscutandoSala = false;
-let monitorConexaoAtivo = false;
-let ultimaConexaoOk = null;
-let escutandoComandosRelogio = false;
 
 let configs = {
 nomeA: "Jogador A",
@@ -787,7 +742,6 @@ ehRelogio = obj.ehRelogio || false;
 
 document.getElementById("tela-config").style.display = "none";
 document.getElementById("tela-placar").style.display = "flex";
-iniciarMonitorConexao();
 
 atualizarTelaVisual();
 atualizarTelaRelogioLeve();
@@ -1197,61 +1151,6 @@ mostrarAvisoGrande(texto);
 mostrarAvisoRelogio(texto);
 }
 
-
-function atualizarStatusConexao(status) {
-let texto = "CONECTANDO...";
-let classe = "reconectando";
-
-if (status === "ok") {
-texto = "ONLINE";
-classe = "ok";
-}
-
-if (status === "off") {
-texto = "RECONECTANDO...";
-classe = "off";
-}
-
-let ids = ["status-conexao", "relogio-status-conexao"];
-ids.forEach(id => {
-let el = document.getElementById(id);
-if (!el) return;
-el.innerText = texto;
-el.className = id === "status-conexao" ? "status-conexao " + classe : classe;
-});
-}
-
-function iniciarMonitorConexao() {
-if (monitorConexaoAtivo) return;
-monitorConexaoAtivo = true;
-atualizarStatusConexao("reconectando");
-
-database.ref(".info/connected").on("value", (snapshot) => {
-let conectado = snapshot.val() === true;
-ultimaConexaoOk = conectado;
-
-if (conectado) {
-atualizarStatusConexao("ok");
-if (salaId) {
-escutarFirebase(true);
-if (!ehRelogio) escutarComandosRelogio();
-}
-} else {
-atualizarStatusConexao("off");
-firebaseEscutandoSala = false;
-escutandoComandosRelogio = false;
-}
-});
-}
-
-document.addEventListener("visibilitychange", function() {
-if (!document.hidden && salaId) {
-atualizarStatusConexao(ultimaConexaoOk ? "ok" : "reconectando");
-escutarFirebase(true);
-if (!ehRelogio) escutarComandosRelogio();
-}
-});
-
 function enviarComandoRelogio(tipo, jogador = "") {
 if (!salaId) return;
 
@@ -1268,10 +1167,7 @@ database.ref('salas/' + salaId + '/comandoRelogio').set(comando);
 
 function escutarComandosRelogio() {
 if (!salaId || ehRelogio) return;
-if (escutandoComandosRelogio) return;
-escutandoComandosRelogio = true;
 
-database.ref('salas/' + salaId + '/comandoRelogio').off('value');
 database.ref('salas/' + salaId + '/comandoRelogio').on('value', (snapshot) => {
 const comando = snapshot.val();
 if (!comando || !comando.id) return;
@@ -1314,18 +1210,11 @@ database.ref('salas/' + salaId).update(dadosAtualizacao);
 function desligarEscutador() {
 if (salaId) {
 database.ref('salas/' + salaId).off();
-database.ref('salas/' + salaId + '/comandoRelogio').off();
 }
-firebaseEscutandoSala = false;
 }
 
-function escutarFirebase(forcarReconexao = false) {
+function escutarFirebase() {
 if (!salaId) return;
-
-if (firebaseEscutandoSala && !forcarReconexao) return;
-
-database.ref('salas/' + salaId).off('value');
-firebaseEscutandoSala = true;
 
 database.ref('salas/' + salaId).on('value', (snapshot) => {
 const dados = snapshot.val();
@@ -1418,7 +1307,6 @@ historico: []
 
 document.getElementById("tela-config").style.display = "none";
 document.getElementById("tela-placar").style.display = "flex";
-iniciarMonitorConexao();
 
 atualizarTelaVisual();
 iniciarCronometroVisual();
@@ -1436,33 +1324,13 @@ if (!codigoSala) return;
 
 salaId = codigoSala.toString().trim();
 ehRelogio = true;
-iniciarMonitorConexao();
-atualizarStatusConexao("reconectando");
-
-tentarEntrarNaSala(0);
-}
-
-function tentarEntrarNaSala(tentativa) {
-if (!salaId) return;
 
 database.ref('salas/' + salaId).once('value', (snapshot) => {
 if (snapshot.exists()) {
 mostrarTelaRelogioLeve();
-escutarFirebase(true);
-return;
-}
-
-if (tentativa < 8) {
-atualizarStatusConexao("reconectando");
-setTimeout(() => tentarEntrarNaSala(tentativa + 1), 1500);
+escutarFirebase();
 } else {
-atualizarStatusConexao("off");
 alert("Sala não encontrada!");
-}
-}).catch(() => {
-atualizarStatusConexao("off");
-if (tentativa < 8) {
-setTimeout(() => tentarEntrarNaSala(tentativa + 1), 1500);
 }
 });
 }
@@ -1490,9 +1358,15 @@ return;
 
 salaId = codigoDigitado;
 ehRelogio = true;
-iniciarMonitorConexao();
-atualizarStatusConexao("reconectando");
-tentarEntrarNaSala(0);
+
+database.ref('salas/' + salaId).once('value', (snapshot) => {
+if (snapshot.exists()) {
+mostrarTelaRelogioLeve();
+escutarFirebase();
+} else {
+alert("Sala não encontrada!");
+}
+});
 }
 
 function voltarAoMenu() {
