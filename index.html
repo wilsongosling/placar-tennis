@@ -752,6 +752,12 @@ tempoFinalPartida: null,
 historicoSets: [],
 partidaEncerrada: false,
 historicoSalvo: false,
+estatisticas: {
+  games: [],
+  totalDeuces: 0,
+  tieBreaks: 0,
+  gameAtual: null
+},
 historico: []
 };
 
@@ -806,7 +812,8 @@ setsA: jogo.setsA,
 setsB: jogo.setsB,
 sets: JSON.parse(JSON.stringify(jogo.historicoSets || [])),
 duracao: formatarTempo(fim - inicio),
-modalidade: configs.modalidade || "tenis"
+modalidade: configs.modalidade || "tenis",
+estatisticas: JSON.parse(JSON.stringify(jogo.estatisticas || {}))
 };
 
 let lista = obterHistoricoPartidas();
@@ -862,6 +869,104 @@ return String(valor == null ? "" : valor)
 function placarFinalHistorico(partida) {
 if (!partida) return "";
 return `${partida.setsA || 0} x ${partida.setsB || 0}`;
+}
+
+
+function formatarDuracaoCurta(ms) {
+ms = Number(ms || 0);
+if (ms < 0) ms = 0;
+let totalSegundos = Math.floor(ms / 1000);
+let minutos = Math.floor(totalSegundos / 60);
+let segundos = totalSegundos % 60;
+if (minutos >= 60) {
+let horas = Math.floor(minutos / 60);
+minutos = minutos % 60;
+return horas + "h " + String(minutos).padStart(2, "0") + "min " + String(segundos).padStart(2, "0") + "s";
+}
+return minutos + "min " + String(segundos).padStart(2, "0") + "s";
+}
+
+function garantirEstruturaEstatisticas() {
+if (!jogo.estatisticas) jogo.estatisticas = {};
+if (!Array.isArray(jogo.estatisticas.games)) jogo.estatisticas.games = [];
+if (typeof jogo.estatisticas.totalDeuces !== "number") jogo.estatisticas.totalDeuces = 0;
+if (typeof jogo.estatisticas.tieBreaks !== "number") jogo.estatisticas.tieBreaks = 0;
+if (!jogo.estatisticas.gameAtual) iniciarEstatisticaGameAtual();
+}
+
+function iniciarEstatisticaGameAtual() {
+if (!jogo.estatisticas) jogo.estatisticas = { games: [], totalDeuces: 0, tieBreaks: 0, gameAtual: null };
+if (!Array.isArray(jogo.estatisticas.games)) jogo.estatisticas.games = [];
+let setNumero = (jogo.historicoSets ? jogo.historicoSets.length : 0) + 1;
+let gameNumero = (Number(jogo.gamesA || 0) + Number(jogo.gamesB || 0)) + 1;
+let inicio = new Date().getTime();
+if (jogo.inicioPartida && inicio < jogo.inicioPartida) inicio = jogo.inicioPartida;
+
+jogo.estatisticas.gameAtual = {
+setNumero: setNumero,
+gameNumero: gameNumero,
+inicio: inicio,
+pontos: 0,
+deuces: 0,
+tieBreak: !!jogo.emTieBreak
+};
+}
+
+function registrarPontoEstatistica() {
+garantirEstruturaEstatisticas();
+jogo.estatisticas.gameAtual.pontos = Number(jogo.estatisticas.gameAtual.pontos || 0) + 1;
+}
+
+function registrarDeuceEstatistica() {
+garantirEstruturaEstatisticas();
+jogo.estatisticas.gameAtual.deuces = Number(jogo.estatisticas.gameAtual.deuces || 0) + 1;
+jogo.estatisticas.totalDeuces = Number(jogo.estatisticas.totalDeuces || 0) + 1;
+}
+
+function finalizarEstatisticaGame(vencedor, ehTieBreak) {
+garantirEstruturaEstatisticas();
+let atual = jogo.estatisticas.gameAtual;
+if (!atual || atual.finalizado) return;
+let fim = new Date().getTime();
+let duracaoMs = fim - Number(atual.inicio || fim);
+if (duracaoMs < 0) duracaoMs = 0;
+
+jogo.estatisticas.games.push({
+setNumero: atual.setNumero,
+gameNumero: atual.gameNumero,
+duracaoMs: duracaoMs,
+duracao: formatarDuracaoCurta(duracaoMs),
+pontos: Number(atual.pontos || 0),
+deuces: Number(atual.deuces || 0),
+vencedor: vencedor,
+tieBreak: !!ehTieBreak
+});
+
+if (ehTieBreak) jogo.estatisticas.tieBreaks = Number(jogo.estatisticas.tieBreaks || 0) + 1;
+jogo.estatisticas.gameAtual = null;
+}
+
+function obterResumoEstatisticasPartida(partida) {
+let stats = partida && partida.estatisticas ? partida.estatisticas : {};
+let games = Array.isArray(stats.games) ? stats.games : [];
+let totalGames = games.length;
+let totalDeuces = Number(stats.totalDeuces || 0);
+let tieBreaks = Number(stats.tieBreaks || 0);
+let gameMaisLongo = null;
+let gameMaisDeuces = null;
+
+games.forEach(g => {
+if (!gameMaisLongo || Number(g.duracaoMs || 0) > Number(gameMaisLongo.duracaoMs || 0)) gameMaisLongo = g;
+if (!gameMaisDeuces || Number(g.deuces || 0) > Number(gameMaisDeuces.deuces || 0)) gameMaisDeuces = g;
+});
+
+return { totalGames, totalDeuces, tieBreaks, gameMaisLongo, gameMaisDeuces };
+}
+
+function textoGameEstatistica(game) {
+if (!game) return "Não registrado";
+let prefixo = game.tieBreak ? "Tie-break" : `${game.gameNumero}º game`;
+return `${prefixo} do ${game.setNumero}º set`;
 }
 
 function renderizarResumoHistorico(lista) {
@@ -937,7 +1042,25 @@ el.innerHTML = `
 <div class="detalhe-linha"><span>Duração</span><strong>${duracao}</strong></div>
 <div class="detalhe-linha"><span>Data</span><strong>${data}</strong></div>
 <div class="detalhe-linha"><span>Modalidade</span><strong>${modalidade}</strong></div>
-<div class="detalhe-placeholder">Área reservada para estatísticas futuras: pontos totais, games, tie-breaks, sequência da partida e outros dados.</div>`;
+${renderizarBlocoEstatisticasPartida(partida)}`;
+}
+
+
+function renderizarBlocoEstatisticasPartida(partida) {
+let resumo = obterResumoEstatisticasPartida(partida);
+let gameLongo = resumo.gameMaisLongo;
+let gameDeuces = resumo.gameMaisDeuces;
+let textoLongo = gameLongo ? `${textoSeguroHistorico(textoGameEstatistica(gameLongo))} — ${textoSeguroHistorico(gameLongo.duracao || formatarDuracaoCurta(gameLongo.duracaoMs))}` : "Não registrado";
+let textoDeuces = gameDeuces && Number(gameDeuces.deuces || 0) > 0 ? `${textoSeguroHistorico(textoGameEstatistica(gameDeuces))} — ${Number(gameDeuces.deuces || 0)} deuce(s)` : "Nenhum deuce registrado";
+return `
+<div class="detalhe-placeholder">
+<strong>Estatísticas da partida</strong><br><br>
+Games totais: <strong>${resumo.totalGames}</strong><br>
+Deuces totais: <strong>${resumo.totalDeuces}</strong><br>
+Tie-breaks: <strong>${resumo.tieBreaks}</strong><br><br>
+Game mais longo:<br><strong>${textoLongo}</strong><br><br>
+Game com mais deuces:<br><strong>${textoDeuces}</strong>
+</div>`;
 }
 
 function apagarPartidaHistorico(id) {
@@ -1005,6 +1128,7 @@ let obj = JSON.parse(dados);
 
 configs = obj.configs || configs;
 jogo = obj.jogo || jogo;
+garantirEstruturaEstatisticas();
 salaId = obj.salaId || null;
 ehRelogio = obj.ehRelogio || false;
 
@@ -1572,8 +1696,15 @@ tempoFinalPartida: null,
 historicoSets: [],
 partidaEncerrada: false,
 historicoSalvo: false,
+estatisticas: {
+  games: [],
+  totalDeuces: 0,
+  tieBreaks: 0,
+  gameAtual: null
+},
 historico: []
 };
+iniciarEstatisticaGameAtual();
 
 document.getElementById("tela-config").style.display = "none";
 document.getElementById("tela-placar").style.display = "flex";
@@ -1676,7 +1807,8 @@ inicioPartida: jogo.inicioPartida,
 tempoFinalPartida: jogo.tempoFinalPartida,
 historicoSets: JSON.parse(JSON.stringify(jogo.historicoSets || [])),
 partidaEncerrada: jogo.partidaEncerrada,
-historicoSalvo: jogo.historicoSalvo || false
+historicoSalvo: jogo.historicoSalvo || false,
+estatisticas: JSON.parse(JSON.stringify(jogo.estatisticas || {}))
 };
 
 if (!jogo.historico) jogo.historico = [];
@@ -1692,6 +1824,7 @@ return;
 if (jogo.partidaEncerrada) return;
 
 salvarHistorico();
+registrarPontoEstatistica();
 
 if (jogo.emTieBreak) {
 if (jogador === 'A') jogo.pontosTbA++;
@@ -1704,12 +1837,14 @@ let pontosMinimos = 7;
 
 if (configs.tipoTb === "com_limite") {
 if (tA >= configs.limitePontosTb && (tA - tB) >= 1) {
+finalizarEstatisticaGame('A', true);
 colocarSet('A');
 finalizarPonto('A');
 return;
 }
 
 if (tB >= configs.limitePontosTb && (tB - tA) >= 1) {
+finalizarEstatisticaGame('B', true);
 colocarSet('B');
 finalizarPonto('B');
 return;
@@ -1717,12 +1852,14 @@ return;
 
 } else {
 if (tA >= pontosMinimos && (tA - tB) >= 2) {
+finalizarEstatisticaGame('A', true);
 colocarSet('A');
 finalizarPonto('A');
 return;
 }
 
 if (tB >= pontosMinimos && (tB - tA) >= 2) {
+finalizarEstatisticaGame('B', true);
 colocarSet('B');
 finalizarPonto('B');
 return;
@@ -1894,6 +2031,7 @@ return;
 
 if (jogo[pPerdedor] === 4) {
 jogo[pPerdedor] = 3;
+registrarDeuceEstatistica();
 return;
 }
 
@@ -1912,6 +2050,10 @@ return;
 if (jogo[pGanhador] === 3 && jogo[pPerdedor] < 3) {
 colocarGame(ganhador);
 return;
+}
+
+if (jogo[pGanhador] === 2 && jogo[pPerdedor] === 3) {
+registrarDeuceEstatistica();
 }
 
 jogo[pGanhador]++;
@@ -1997,6 +2139,7 @@ return " Troca de lado.";
 
 function colocarGame(jogador) {
 let gMax = configs.gamesParaVencerSet;
+finalizarEstatisticaGame(jogador, false);
 
 if (jogador === 'A') jogo.gamesA++;
 else jogo.gamesB++;
@@ -2017,6 +2160,7 @@ if (gA === 8 && gB === 8) {
 jogo.emTieBreak = true;
 jogo.pontosTbA = 0;
 jogo.pontosTbB = 0;
+iniciarEstatisticaGameAtual();
 return;
 }
 
@@ -2040,6 +2184,7 @@ colocarSet('B');
 return;
 }
 
+iniciarEstatisticaGameAtual();
 return;
 }
 
@@ -2059,6 +2204,7 @@ if (gA === gMax && gB === gMax) {
 jogo.emTieBreak = true;
 jogo.pontosTbA = 0;
 jogo.pontosTbB = 0;
+iniciarEstatisticaGameAtual();
 return;
 }
 }
@@ -2074,6 +2220,10 @@ if (gA >= gMax || gB >= gMax) {
 if (gA >= gMax && (gA - gB) >= 2) colocarSet('A');
 else if (gB >= gMax && (gB - gA) >= 2) colocarSet('B');
 }
+}
+
+if (!jogo.partidaEncerrada && !jogo.emTieBreak && !jogo.estatisticas.gameAtual) {
+iniciarEstatisticaGameAtual();
 }
 }
 
@@ -2104,6 +2254,8 @@ jogo.partidaEncerrada = true;
 if (!jogo.tempoFinalPartida) jogo.tempoFinalPartida = new Date().getTime();
 pararCronometroVisual();
 salvarPartidaEncerradaNoHistorico();
+} else {
+iniciarEstatisticaGameAtual();
 }
 }
 
