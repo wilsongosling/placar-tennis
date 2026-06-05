@@ -751,6 +751,7 @@ contadorDeuces: 0,
 emTieBreak: false,
 pontosTbA: 0,
 pontosTbB: 0,
+sacadorTieBreakInicial: "A",
 sacadorAtual: "A",
 ultimoAvisoTrocaLado: "",
 mostrarTrocaLado: false,
@@ -941,7 +942,7 @@ jogo.estatisticas.totalDeuces = Number(jogo.estatisticas.totalDeuces || 0) + 1;
 }
 
 function obterBreakPointAntesDoPonto() {
-if (jogo.partidaEncerrada || jogo.emTieBreak) return { existe: false, recebedor: "" };
+if (jogo.partidaEncerrada || jogo.emTieBreak) return { existe: false, recebedor: "" }; // tie-break não tem break point
 let sacador = jogo.sacadorAtual || configs.sacadorInicial || "A";
 let recebedor = sacador === "A" ? "B" : "A";
 
@@ -1739,6 +1740,7 @@ contadorDeuces: 0,
 emTieBreak: false,
 pontosTbA: 0,
 pontosTbB: 0,
+sacadorTieBreakInicial: configs.sacadorInicial,
 sacadorAtual: configs.sacadorInicial,
 ultimoAvisoTrocaLado: "",
 mostrarTrocaLado: false,
@@ -1855,6 +1857,7 @@ contadorDeuces: jogo.contadorDeuces,
 emTieBreak: jogo.emTieBreak,
 pontosTbA: jogo.pontosTbA,
 pontosTbB: jogo.pontosTbB,
+sacadorTieBreakInicial: jogo.sacadorTieBreakInicial || jogo.sacadorAtual,
 sacadorAtual: jogo.sacadorAtual,
 ultimoAvisoTrocaLado: jogo.ultimoAvisoTrocaLado,
 mostrarTrocaLado: jogo.mostrarTrocaLado,
@@ -1892,6 +1895,7 @@ registrarBreakPointConvertido(jogador);
 if (jogo.emTieBreak) {
 if (jogador === 'A') jogo.pontosTbA++;
 else jogo.pontosTbB++;
+atualizarSacadorTieBreak();
 
 let tA = jogo.pontosTbA;
 let tB = jogo.pontosTbB;
@@ -2200,6 +2204,34 @@ mostrarAvisoTrocaLado();
 return " Troca de lado.";
 }
 
+function iniciarTieBreak() {
+if (!jogo.emTieBreak) {
+jogo.sacadorTieBreakInicial = jogo.sacadorAtual || configs.sacadorInicial || "A";
+}
+jogo.emTieBreak = true;
+jogo.pontosTbA = 0;
+jogo.pontosTbB = 0;
+jogo.sacadorAtual = jogo.sacadorTieBreakInicial || jogo.sacadorAtual || configs.sacadorInicial || "A";
+iniciarEstatisticaGameAtual();
+}
+
+function atualizarSacadorTieBreak() {
+if (!jogo.emTieBreak) return;
+if (configs.trocaSaque === "manual") return;
+
+let inicial = jogo.sacadorTieBreakInicial || jogo.sacadorAtual || configs.sacadorInicial || "A";
+let outro = inicial === "A" ? "B" : "A";
+let pontosJogados = Number(jogo.pontosTbA || 0) + Number(jogo.pontosTbB || 0);
+
+if (pontosJogados === 0) {
+jogo.sacadorAtual = inicial;
+return;
+}
+
+let bloco = Math.floor((pontosJogados - 1) / 2);
+jogo.sacadorAtual = (bloco % 2 === 0) ? outro : inicial;
+}
+
 function colocarGame(jogador) {
 let gMax = configs.gamesParaVencerSet;
 finalizarEstatisticaGame(jogador, false);
@@ -2220,10 +2252,7 @@ let gB = jogo.gamesB;
 
 if (configs.modalidade === "proset8") {
 if (gA === 8 && gB === 8) {
-jogo.emTieBreak = true;
-jogo.pontosTbA = 0;
-jogo.pontosTbB = 0;
-iniciarEstatisticaGameAtual();
+iniciarTieBreak();
 return;
 }
 
@@ -2256,18 +2285,13 @@ if (configs.regraTb === "com_limite") {
 let deuceTb = gMax - 1;
 
 if (gA === deuceTb && gB === deuceTb) {
-jogo.emTieBreak = true;
-jogo.pontosTbA = 0;
-jogo.pontosTbB = 0;
+iniciarTieBreak();
 return;
 }
 
 } else {
 if (gA === gMax && gB === gMax) {
-jogo.emTieBreak = true;
-jogo.pontosTbA = 0;
-jogo.pontosTbB = 0;
-iniciarEstatisticaGameAtual();
+iniciarTieBreak();
 return;
 }
 }
@@ -2309,6 +2333,7 @@ jogo.gamesB = 0;
 jogo.emTieBreak = false;
 jogo.pontosTbA = 0;
 jogo.pontosTbB = 0;
+jogo.sacadorTieBreakInicial = jogo.sacadorAtual || configs.sacadorInicial || "A";
 
 atualizarSacadorAutomatico();
 
