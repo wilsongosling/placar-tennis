@@ -1884,6 +1884,8 @@ return;
 
 if (jogo.partidaEncerrada) return;
 
+let sacadorAntesDoPonto = jogo.sacadorAtual;
+
 salvarHistorico();
 registrarPontoEstatistica();
 
@@ -1914,6 +1916,7 @@ if (configs.tipoTb === "com_limite") {
 if (tA >= configs.limitePontosTb && (tA - tB) >= 1) {
 finalizarEstatisticaGame('A', true);
 colocarSet('A');
+marcarAvisoTrocaSaqueSeMudou(sacadorAntesDoPonto);
 finalizarPonto('A');
 return;
 }
@@ -1921,6 +1924,7 @@ return;
 if (tB >= configs.limitePontosTb && (tB - tA) >= 1) {
 finalizarEstatisticaGame('B', true);
 colocarSet('B');
+marcarAvisoTrocaSaqueSeMudou(sacadorAntesDoPonto);
 finalizarPonto('B');
 return;
 }
@@ -1929,6 +1933,7 @@ return;
 if (tA >= pontosMinimos && (tA - tB) >= 2) {
 finalizarEstatisticaGame('A', true);
 colocarSet('A');
+marcarAvisoTrocaSaqueSeMudou(sacadorAntesDoPonto);
 finalizarPonto('A');
 return;
 }
@@ -1936,6 +1941,7 @@ return;
 if (tB >= pontosMinimos && (tB - tA) >= 2) {
 finalizarEstatisticaGame('B', true);
 colocarSet('B');
+marcarAvisoTrocaSaqueSeMudou(sacadorAntesDoPonto);
 finalizarPonto('B');
 return;
 }
@@ -1945,11 +1951,18 @@ return;
 processarPontuacaoNormal(jogador, playerInvertido(jogador));
 }
 
+marcarAvisoTrocaSaqueSeMudou(sacadorAntesDoPonto);
 finalizarPonto(jogador);
 }
 
 function playerInvertido(jog) {
 return jog === 'A' ? 'B' : 'A';
+}
+
+function marcarAvisoTrocaSaqueSeMudou(sacadorAntes) {
+if (sacadorAntes && jogo.sacadorAtual && sacadorAntes !== jogo.sacadorAtual) {
+jogo.avisoTrocaSaque = true;
+}
 }
 
 
@@ -2079,6 +2092,7 @@ jogo.mostrarTrocaLado = false;
 }
 
 if (jogo.avisoTrocaSaque) {
+textoFalar = textoFalar.replace(/\s*\|\s*Sacando:\s*[^|.]+\.?/g, "");
 textoFalar += " | Troca de saque. Sacando: " + nomeDoJogador(jogo.sacadorAtual) + ".";
 jogo.avisoTrocaSaque = false;
 }
