@@ -2087,13 +2087,13 @@ let textoFalar = gerarTextoLocucao(jogador);
 
 if (jogo.mostrarTrocaLado) {
 mostrarAvisoTrocaLado();
-textoFalar += " | Troca de lado.";
+textoFalar = textoFalar.replace(/\s*\|\s*Sacando:\s*[^|.]+\.?/g, "");
+textoFalar += " | Troca de lado. Sacando: " + nomeDoJogador(jogo.sacadorAtual) + ".";
 jogo.mostrarTrocaLado = false;
 }
 
 if (jogo.avisoTrocaSaque) {
-textoFalar = textoFalar.replace(/\s*\|\s*Sacando:\s*[^|.]+\.?/g, "");
-textoFalar += " | Troca de saque. Sacando: " + nomeDoJogador(jogo.sacadorAtual) + ".";
+// Não falar "troca de saque". A troca do sacador aparece apenas junto da troca de lado.
 jogo.avisoTrocaSaque = false;
 }
 
